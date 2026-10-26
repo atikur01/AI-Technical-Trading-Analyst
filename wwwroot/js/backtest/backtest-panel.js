@@ -47,6 +47,25 @@
         const from = new Date(to.getTime() - days * 86400000);
         $('#bt-from').val(isoDate(from));
         $('#bt-to').val(isoDate(to));
+        markActiveRange();
+    }
+
+    function markActiveRange() {
+        const from = Date.parse($('#bt-from').val());
+        const to = Date.parse($('#bt-to').val());
+        const days = Math.round((to - from) / 86400000);
+        $('#bt-ranges .chip-btn').each(function () {
+            $(this).toggleClass('is-active', Number($(this).data('days')) === days);
+        });
+    }
+
+    function applyRange(days) {
+        const to = new Date();
+        to.setUTCHours(0, 0, 0, 0);
+        $('#bt-from').val(isoDate(new Date(to.getTime() - days * 86400000)));
+        $('#bt-to').val(isoDate(to));
+        datesTouched = true;
+        markActiveRange();
     }
 
     function renderParams() {
@@ -241,7 +260,11 @@
             applyDefaultDates();
 
             $('#bt-strategy').on('change', renderParams);
-            $('#bt-from, #bt-to').on('change', function () { datesTouched = true; });
+            $('#bt-from, #bt-to').on('change', function () {
+                datesTouched = true;
+                markActiveRange();
+            });
+            $('#bt-ranges').on('click', '.chip-btn', function () { applyRange(Number($(this).data('days'))); });
             $('#backtest-button').on('click', function () { App.panel.open('backtest'); });
 
             $('#backtest-form').on('submit', function (event) {

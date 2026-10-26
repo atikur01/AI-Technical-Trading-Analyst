@@ -139,47 +139,72 @@
                 </section>
                 <section id="tab-backtest" class="hidden p-3">
                     <form id="backtest-form" class="space-y-3" autocomplete="off">
-                        <div>
-                            <label class="label" for="bt-strategy">Strategy</label>
-                            <select id="bt-strategy" class="field">
+                        <fieldset class="form-section">
+                            <legend class="section-title">Strategy</legend>
+                            <select id="bt-strategy" class="field" aria-label="Strategy">
                                 <option value="ema-cross">EMA Cross</option>
                                 <option value="rsi-reversal">RSI Reversal</option>
                                 <option value="fib-pullback">Fib Pullback</option>
                                 <option value="ai-setup">AI Setup Rules</option>
                             </select>
+                            <div id="bt-setup-wrap" class="hidden">
+                                <label class="label" for="bt-setup">AI setup</label>
+                                <select id="bt-setup" class="field"></select>
+                            </div>
+                            <div id="bt-params" class="grid grid-cols-2 gap-2"></div>
+                        </fieldset>
+                        <fieldset class="form-section">
+                            <legend class="section-title">Period</legend>
+                            <div class="flex gap-1" id="bt-ranges">
+                                <button type="button" class="chip chip-btn" data-days="7">7D</button>
+                                <button type="button" class="chip chip-btn" data-days="30">30D</button>
+                                <button type="button" class="chip chip-btn" data-days="90">90D</button>
+                                <button type="button" class="chip chip-btn" data-days="180">6M</button>
+                                <button type="button" class="chip chip-btn" data-days="365">1Y</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="label" for="bt-from">From</label>
+                                    <input id="bt-from" type="date" class="field" required />
+                                </div>
+                                <div>
+                                    <label class="label" for="bt-to">To</label>
+                                    <input id="bt-to" type="date" class="field" required />
+                                </div>
+                            </div>
+                        </fieldset>
+                        <fieldset class="form-section">
+                            <legend class="section-title">Capital &amp; costs</legend>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="label" for="bt-balance">Initial balance</label>
+                                    <div class="input-affix" data-affix="$">
+                                        <input id="bt-balance" type="number" class="field" value="10000" min="1" step="any" required />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="label" for="bt-risk">Risk / trade</label>
+                                    <div class="input-affix" data-affix="%">
+                                        <input id="bt-risk" type="number" class="field" value="1" min="0.01" max="100" step="any" required />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="label" for="bt-fee">Fee</label>
+                                    <div class="input-affix" data-affix="%">
+                                        <input id="bt-fee" type="number" class="field" value="0.1" min="0" max="5" step="any" required />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="label" for="bt-slippage">Slippage</label>
+                                    <div class="input-affix" data-affix="%">
+                                        <input id="bt-slippage" type="number" class="field" value="0.05" min="0" max="5" step="any" required />
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <div class="sticky bottom-0 -mx-3 border-t border-tv-border bg-tv-panel px-3 py-2">
+                            <button type="submit" id="bt-run" class="btn btn-primary w-full py-2">Run backtest</button>
                         </div>
-                        <div id="bt-setup-wrap" class="hidden">
-                            <label class="label" for="bt-setup">AI setup</label>
-                            <select id="bt-setup" class="field"></select>
-                        </div>
-                        <div id="bt-params" class="grid grid-cols-2 gap-2"></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="label" for="bt-from">From</label>
-                                <input id="bt-from" type="date" class="field" required />
-                            </div>
-                            <div>
-                                <label class="label" for="bt-to">To</label>
-                                <input id="bt-to" type="date" class="field" required />
-                            </div>
-                            <div>
-                                <label class="label" for="bt-balance">Initial balance</label>
-                                <input id="bt-balance" type="number" class="field" value="10000" min="1" step="any" required />
-                            </div>
-                            <div>
-                                <label class="label" for="bt-risk">Risk % / trade</label>
-                                <input id="bt-risk" type="number" class="field" value="1" min="0.01" max="100" step="any" required />
-                            </div>
-                            <div>
-                                <label class="label" for="bt-fee">Fee %</label>
-                                <input id="bt-fee" type="number" class="field" value="0.1" min="0" max="5" step="any" required />
-                            </div>
-                            <div>
-                                <label class="label" for="bt-slippage">Slippage %</label>
-                                <input id="bt-slippage" type="number" class="field" value="0.05" min="0" max="5" step="any" required />
-                            </div>
-                        </div>
-                        <button type="submit" id="bt-run" class="btn btn-primary w-full">Run backtest</button>
                         <p class="text-xs text-tv-muted">Tip: validate a strategy on a date range different from the one you tuned it on to avoid overfitting.</p>
                     </form>
                     <div id="bt-result" class="mt-4"></div>
