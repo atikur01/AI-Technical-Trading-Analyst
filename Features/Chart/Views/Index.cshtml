@@ -18,7 +18,7 @@
     };
 }
 
-<div id="app" class="flex h-full flex-col" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl">
+<div id="app" class="flex h-full w-full min-w-0 flex-col overflow-hidden" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl">
     <header class="flex flex-wrap items-center gap-2 border-b border-tv-border bg-tv-panel px-3 py-2">
         <div class="relative mr-2 flex items-center gap-2">
             <button type="button" id="symbol-toggle" class="btn text-base font-bold tracking-tight" aria-haspopup="true" title="Change symbol (/)">
@@ -52,7 +52,7 @@
             </div>
         </div>
 
-        <div class="ml-auto flex items-center gap-2">
+        <div class="ml-auto flex shrink-0 items-center gap-2">
             <button type="button" id="analyze-button" class="btn btn-primary" title="Analyze (A)">Analyze with AI</button>
             <button type="button" id="backtest-button" class="btn" title="Backtest (B)">Backtest</button>
             <button type="button" id="panel-toggle" class="btn" title="Toggle panel (Esc)" aria-label="Toggle panel">Panel</button>
@@ -144,8 +144,21 @@
                         <input type="checkbox" id="keep-drawings" class="accent-tv-accent" /> Keep drawings when timeframe changes
                     </label>
                     <div id="analysis-result">
-                        <div class="rounded-lg border border-dashed border-tv-border p-6 text-center text-sm text-tv-muted">
-                            Press <span class="font-semibold text-tv-text">Analyze with AI</span> to get a top-down analysis, trade setups and chart drawings.
+                        <div class="flex flex-col items-center gap-4 px-2 py-8 text-center">
+                            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-tv-accent/15 text-tv-accent">
+                                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16" /><path d="M8 15l3-4 3 2 5-6" /></svg>
+                            </div>
+                            <div class="space-y-1">
+                                <h2 class="text-base font-semibold text-tv-text">AI chart analysis</h2>
+                                <p class="text-sm text-tv-muted">Get a top-down market read, trade setups and chart drawings for the current symbol and timeframe.</p>
+                            </div>
+                            <button type="button" id="analysis-start" class="btn btn-primary w-full max-w-xs py-2">Analyze with AI</button>
+                            <ul class="w-full space-y-2 text-left text-xs text-tv-muted">
+                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Trend and structure across timeframes</li>
+                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Entry, stop loss and take profit setups</li>
+                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Drawn on the chart and ready to backtest</li>
+                            </ul>
+                            <p class="text-xs text-tv-muted">Shortcut: press <span class="rounded border border-tv-border bg-tv-bg px-1.5 py-0.5 font-semibold text-tv-text">A</span></p>
                         </div>
                     </div>
                 </section>

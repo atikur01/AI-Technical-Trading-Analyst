@@ -135,7 +135,7 @@
                     event.stopPropagation();
                     App.backtestPanel.runForSetup($(this).data('setup-id'));
                 })
-                .on('click', '#analysis-retry', App.analysisPanel.run);
+                .on('click', '#analysis-retry, #analysis-start', App.analysisPanel.run);
 
             $('#drawings-toggle').on('click', function () {
                 App.drawingRenderer.toggle();
