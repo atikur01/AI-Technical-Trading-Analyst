@@ -5,10 +5,12 @@ using TradingChartAnalyzer.Features.MarketData;
 using TradingChartAnalyzer.Shared.Configuration;
 using TradingChartAnalyzer.Shared.Http;
 using TradingChartAnalyzer.Shared.Json;
+using TradingChartAnalyzer.Shared.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddDotEnvFile();
+builder.AddFileLogging();
 
 builder.Services
     .AddControllersWithViews()

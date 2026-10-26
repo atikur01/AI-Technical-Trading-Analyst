@@ -41,7 +41,7 @@
 
     function bindKeyboard() {
         const timeframes = ['1m', '5m', '15m', '1h', '4h', '1d'];
-        const toolKeys = { v: 'cursor', t: 'trendline', h: 'horizontal', f: 'fibonacci', r: 'rect', m: 'measure' };
+        const toolKeys = { v: 'cursor', p: 'pan', t: 'trendline', h: 'horizontal', f: 'fibonacci', r: 'rect', m: 'measure' };
         $(document).on('keydown', function (event) {
             if (event.ctrlKey || event.metaKey || event.altKey) return;
             if ($(event.target).is('input, select, textarea')) return;

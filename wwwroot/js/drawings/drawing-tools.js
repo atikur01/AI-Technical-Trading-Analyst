@@ -36,7 +36,7 @@
     }
 
     function setCursor() {
-        container.style.cursor = tool === 'cursor' ? '' : 'crosshair';
+        container.style.cursor = tool === 'cursor' ? '' : tool === 'pan' ? 'grab' : 'crosshair';
     }
 
     function buildDrawing(kind, c) {
@@ -141,7 +141,7 @@
     function onMouseDown(event) {
         if (event.button !== 0) return;
         const p = relative(event);
-        if (!inPlot(p)) return;
+        if (tool === 'pan' || !inPlot(p)) return;
         const c = App.chartCore.pointToChart(p.x, p.y);
         if (!c) return;
 
