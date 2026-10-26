@@ -58,7 +58,10 @@
 
             const key = event.key.toLowerCase();
             if (key >= '1' && key <= '8') setTimeframe(timeframes[Number(key) - 1]);
-            else if (key === 'a') App.analysisPanel.run();
+            else if (key === '/') {
+                event.preventDefault();
+                App.symbolSearch.open();
+            } else if (key === 'a') App.analysisPanel.run();
             else if (key === 'b') App.panel.open('backtest');
             else if (toolKeys[key]) App.drawingTools.setTool(toolKeys[key]);
             else if (key === 'delete' || key === 'backspace') App.drawingTools.deleteSelected();
@@ -97,6 +100,7 @@
         App.chartControls.init();
         App.drawingTools.init();
         App.chartGestures.init();
+        App.symbolSearch.init();
         App.analysisPanel.init();
         App.backtestPanel.init();
         bindToolbar();

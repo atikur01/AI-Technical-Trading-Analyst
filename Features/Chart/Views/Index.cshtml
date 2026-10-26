@@ -20,8 +20,15 @@
 
 <div id="app" class="flex h-full flex-col" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl">
     <header class="flex flex-wrap items-center gap-2 border-b border-tv-border bg-tv-panel px-3 py-2">
-        <div class="mr-2 flex items-center gap-2">
-            <span class="text-base font-bold tracking-tight">@Model.Symbol</span>
+        <div class="relative mr-2 flex items-center gap-2">
+            <button type="button" id="symbol-toggle" class="btn text-base font-bold tracking-tight" aria-haspopup="true" title="Change symbol (/)">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4-4" /></svg>
+                <span id="symbol-label">@Model.Symbol</span>
+            </button>
+            <div id="symbol-menu" class="dropdown-menu w-64">
+                <input id="symbol-search" type="text" class="field" placeholder="Search coin, e.g. ETH" autocomplete="off" spellcheck="false" aria-label="Search symbol" />
+                <ul id="symbol-list" class="mt-2 max-h-72 overflow-y-auto" role="listbox"></ul>
+            </div>
             <span id="last-price" class="text-sm font-semibold text-tv-muted">--</span>
         </div>
 
@@ -87,7 +94,7 @@
                         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                     </button>
                 </div>
-                <div id="chart-controls" class="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-lg border border-tv-border bg-tv-panel/95 p-1 shadow-lg">
+                <div id="chart-controls" class="absolute bottom-9 left-1/2 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-lg border border-tv-border bg-tv-panel/95 p-1 shadow-lg">
                     <button type="button" id="ctl-zoom-out" class="ctl-btn" title="Zoom out (-)" aria-label="Zoom out">−</button>
                     <button type="button" id="ctl-zoom-in" class="ctl-btn" title="Zoom in (+)" aria-label="Zoom in">+</button>
                     <span class="mx-0.5 h-4 w-px bg-tv-border"></span>
@@ -242,6 +249,7 @@
     <script src="~/js/drawings/drawing-tools.js" asp-append-version="true"></script>
     <script src="~/js/chart/chart-controls.js" asp-append-version="true"></script>
     <script src="~/js/chart/chart-gestures.js" asp-append-version="true"></script>
+    <script src="~/js/chart/symbol-search.js" asp-append-version="true"></script>
     <script src="~/js/analysis/analysis-panel.js" asp-append-version="true"></script>
     <script src="~/js/backtest/backtest-panel.js" asp-append-version="true"></script>
     <script src="~/js/core/app.js" asp-append-version="true"></script>

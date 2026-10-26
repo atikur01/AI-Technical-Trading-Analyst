@@ -53,12 +53,14 @@ public sealed class AnalysisService(
             return (tf, Candles: (IReadOnlyList<Candle>)candles.Where(c => c.CloseTime < now).ToList());
         }));
 
-        if (fetched.Any(f => f.Candles.Count < MinimumCandles))
+        var usable = fetched.Where(f => f.Candles.Count >= MinimumCandles).ToDictionary(f => f.tf, f => f.Candles);
+
+        if (!usable.ContainsKey(timeframe))
         {
-            throw new MarketDataUnavailableException("Not enough market data to analyze this symbol.");
+            throw new MarketDataUnavailableException($"Not enough {timeframe.ToInterval()} history to analyze {symbol}. Try a lower timeframe.");
         }
 
-        return MarketSnapshotBuilder.Build(symbol, timeframe, fetched.ToDictionary(f => f.tf, f => f.Candles));
+        return MarketSnapshotBuilder.Build(symbol, timeframe, usable);
     }
 
     private async Task<AnalysisResult> RequestAnalysisAsync(string userPrompt, CancellationToken cancellationToken)

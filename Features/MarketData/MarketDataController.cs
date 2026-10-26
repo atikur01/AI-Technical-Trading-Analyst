@@ -14,6 +14,10 @@ public sealed class MarketDataController(IBinanceMarketDataClient client, IOptio
         wsBaseUrl = options.Value.WsBaseUrl
     });
 
+    [HttpGet("symbols")]
+    public async Task<IActionResult> GetSymbols(CancellationToken cancellationToken) =>
+        Ok(await client.GetSymbolsAsync(cancellationToken));
+
     [HttpGet("klines")]
     public async Task<IActionResult> GetKlines(
         [FromQuery] string? symbol,

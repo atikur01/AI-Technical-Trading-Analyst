@@ -112,8 +112,19 @@
         $('#drawings-toggle').text(App.drawingRenderer.isHidden() ? 'Show drawings' : 'Hide drawings');
     }
 
+    let initialResultHtml = '';
+
     App.analysisPanel = {
+        reset: function () {
+            App.state.analysis = null;
+            selectedSetupId = null;
+            $('#analysis-result').html(initialResultHtml);
+            syncControls();
+            $(document).trigger('analysis:updated');
+        },
+
         init: function () {
+            initialResultHtml = $('#analysis-result').html();
             $('#analyze-button').on('click', App.analysisPanel.run);
 
             $('#analysis-result')

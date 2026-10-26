@@ -6,5 +6,7 @@ public interface IBinanceMarketDataClient
 
     Task<IReadOnlyList<Candle>> GetKlinesRangeAsync(string symbol, Timeframe timeframe, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<string>> GetSymbolsAsync(CancellationToken cancellationToken);
+
     Task<bool> PingAsync(CancellationToken cancellationToken);
 }

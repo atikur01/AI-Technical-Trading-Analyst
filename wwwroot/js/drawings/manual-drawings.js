@@ -84,6 +84,7 @@
 
     App.manualDrawings = {
         load: function () {
+            detachAll();
             try {
                 JSON.parse(localStorage.getItem(storageKey()) || '[]').forEach(attach);
             } catch (e) {

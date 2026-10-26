@@ -56,6 +56,38 @@ public sealed class BinanceMarketDataClient(
         return result;
     }
 
+    public async Task<IReadOnlyList<string>> GetSymbolsAsync(CancellationToken cancellationToken)
+    {
+        const string key = "symbols";
+
+        if (cache.TryGetValue(key, out IReadOnlyList<string>? cached) && cached is not null)
+        {
+            return cached;
+        }
+
+        try
+        {
+            using var response = await httpClient.GetAsync("/api/v3/exchangeInfo?permissions=SPOT", cancellationToken);
+            response.EnsureSuccessStatusCode();
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+            IReadOnlyList<string> symbols = document.RootElement.GetProperty("symbols").EnumerateArray()
+                .Where(s => s.GetProperty("status").GetString() == "TRADING" && s.GetProperty("quoteAsset").GetString() == "USDT")
+                .Select(s => s.GetProperty("symbol").GetString()!)
+                .Order(StringComparer.Ordinal)
+                .ToList();
+
+            cache.Set(key, symbols, TimeSpan.FromHours(1));
+            return symbols;
+        }
+        catch (HttpRequestException exception)
+        {
+            logger.LogError(exception, "Binance exchange info request failed");
+            throw new MarketDataUnavailableException("Market data provider is currently unavailable.", exception);
+        }
+    }
+
     public async Task<bool> PingAsync(CancellationToken cancellationToken)
     {
         try
