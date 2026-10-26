@@ -83,7 +83,7 @@
             '<div class="space-y-3">' +
             renderTrend(result.analysis) + renderSummary(result.analysis) + renderLevels(result.analysis.keyLevels) +
             renderSetups(result.setups) + renderWarnings(result.warnings) +
-            '<p class="text-center text-xs text-tv-muted">This is not financial advice. / এটি আর্থিক পরামর্শ নয়।</p>' +
+            '<p class="text-center text-xs text-tv-muted">This is not financial advice.</p>' +
             '</div>'
         );
     }
