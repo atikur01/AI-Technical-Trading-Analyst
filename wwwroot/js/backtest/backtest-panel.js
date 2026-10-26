@@ -3,6 +3,7 @@
     const fmt = App.format;
     const MAX_DEFAULT_CANDLES = 15000;
     const DEFAULT_RANGE_DAYS = 90;
+    const MIN_CANDLES = 120;
 
     const strategies = {
         'ema-cross': [
@@ -38,16 +39,38 @@
         return date.toISOString().slice(0, 10);
     }
 
+    function minimumDays() {
+        return Math.ceil((MIN_CANDLES * App.timeframeStep()) / 86400);
+    }
+
     function applyDefaultDates() {
         if (datesTouched) return;
         const step = App.timeframeStep();
-        const days = Math.max(1, Math.min(DEFAULT_RANGE_DAYS, Math.floor((MAX_DEFAULT_CANDLES * step) / 86400)));
+        const days = Math.max(minimumDays(), Math.min(DEFAULT_RANGE_DAYS, Math.floor((MAX_DEFAULT_CANDLES * step) / 86400)));
         const to = new Date();
         to.setUTCHours(0, 0, 0, 0);
         const from = new Date(to.getTime() - days * 86400000);
         $('#bt-from').val(isoDate(from));
         $('#bt-to').val(isoDate(to));
         markActiveRange();
+    }
+
+    function ensureMinimumRange() {
+        const to = Date.parse($('#bt-to').val());
+        const from = Date.parse($('#bt-from').val());
+        const required = minimumDays() * 86400000;
+        if (!isNaN(to) && !isNaN(from) && to - from >= required) return;
+        if (isNaN(to)) return;
+        $('#bt-from').val(isoDate(new Date(to - required)));
+        markActiveRange();
+    }
+
+    function syncRangeAvailability() {
+        const minimum = minimumDays();
+        $('#bt-ranges .chip-btn').each(function () {
+            const unavailable = Number($(this).data('days')) < minimum;
+            $(this).prop('disabled', unavailable).toggleClass('opacity-40 cursor-not-allowed', unavailable);
+        });
     }
 
     function markActiveRange() {
@@ -258,6 +281,7 @@
             renderParams();
             renderSetupOptions();
             applyDefaultDates();
+            syncRangeAvailability();
 
             $('#bt-strategy').on('change', renderParams);
             $('#bt-from, #bt-to').on('change', function () {

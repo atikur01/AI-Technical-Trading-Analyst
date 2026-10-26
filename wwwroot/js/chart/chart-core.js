@@ -19,10 +19,10 @@
 
     let chart = null;
     let candleSeries = null;
-    let volumeSeries = null;
     let overlaySeries = {};
     let rsiPane = null;
     let macdPane = null;
+    let smcPrimitive = null;
     const MIN_PRICE_ZOOM = 0.05;
     const MAX_PRICE_ZOOM = 20;
 
@@ -35,7 +35,7 @@
     function baseOptions() {
         return {
             autoSize: true,
-            layout: { background: { type: 'solid', color: theme.background }, textColor: theme.text, fontSize: 12 },
+            layout: { background: { type: 'solid', color: theme.background }, textColor: theme.text, fontSize: 12, attributionLogo: false },
             grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
             crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
             rightPriceScale: { borderColor: theme.border },
@@ -51,14 +51,6 @@
             low: Number(row.low),
             close: Number(row.close),
             volume: Number(row.volume)
-        };
-    }
-
-    function volumeBar(candle) {
-        return {
-            time: candle.time,
-            value: candle.volume,
-            color: candle.close >= candle.open ? 'rgba(38,166,154,0.4)' : 'rgba(239,83,80,0.4)'
         };
     }
 
@@ -168,6 +160,12 @@
         }
     }
 
+    function removeSmc() {
+        if (!smcPrimitive) return;
+        candleSeries.detachPrimitive(smcPrimitive);
+        smcPrimitive = null;
+    }
+
     function applyIndicator(key) {
         const candles = App.state.candles;
         const enabled = App.state.indicators.has(key);
@@ -181,6 +179,19 @@
             if (!enabled) return removeOverlay(key);
             getOverlay(key, function () { return lineSeries(overlayStyles.vwap.color, overlayStyles.vwap.title); })
                 .setData(App.indicators.vwap(candles));
+        } else if (key === 'smc') {
+            const show = {
+                swing: App.state.indicators.has('smc'),
+                internal: App.state.indicators.has('smcInternal'),
+                zones: App.state.indicators.has('smcZones'),
+                equal: App.state.indicators.has('smcEqual')
+            };
+            if (!Object.values(show).some(Boolean)) return removeSmc();
+            if (!smcPrimitive) {
+                smcPrimitive = new App.SmcPrimitive();
+                candleSeries.attachPrimitive(smcPrimitive);
+            }
+            smcPrimitive.setResult(App.smc.compute(candles, show));
         } else if (key === 'bollinger') {
             if (!enabled) {
                 removeOverlay('bbUpper');
@@ -208,7 +219,7 @@
     }
 
     function refreshIndicators() {
-        ['ema20', 'ema50', 'ema200', 'vwap', 'bollinger', 'rsi', 'macd'].forEach(applyIndicator);
+        ['smc', 'ema20', 'ema50', 'ema200', 'vwap', 'bollinger', 'rsi', 'macd'].forEach(applyIndicator);
     }
 
     function showError(message) {
@@ -271,14 +282,12 @@
                     };
                 }
             });
-            volumeSeries =chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '', priceLineVisible: false, lastValueVisible: false });
-            volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
 
             chart.subscribeCrosshairMove(function (param) {
                 const bar = param.seriesData && param.seriesData.get(candleSeries);
                 if (bar) {
-                    const volume = param.seriesData.get(volumeSeries);
-                    renderLegend({ open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: volume ? volume.value : 0 });
+                    const candle = App.state.candles.find(function (c) { return c.time === param.time; });
+                    renderLegend({ open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: candle ? candle.volume : 0 });
                 } else {
                     renderLegend(App.state.candles[App.state.candles.length - 1]);
                 }
@@ -300,7 +309,6 @@
                     const candles = rows.map(toCandle);
                     App.state.candles = candles;
                     candleSeries.setData(candles);
-                    volumeSeries.setData(candles.map(volumeBar));
                     refreshIndicators();
                     refreshMarkers();
                     showLatest(candles.length);
@@ -323,7 +331,6 @@
             if (candle.time === last.time) candles[candles.length - 1] = candle;
             else candles.push(candle);
             candleSeries.update(candle);
-            volumeSeries.update(volumeBar(candle));
             refreshIndicators();
             updateLastPrice();
         },
@@ -331,8 +338,9 @@
         setIndicator: function (key, enabled) {
             if (enabled) App.state.indicators.add(key);
             else App.state.indicators.delete(key);
-            applyIndicator(key);
-            if (key === 'bollinger' || key in emaPeriods || key === 'vwap') return;
+            const isSmc = key.indexOf('smc') === 0;
+            applyIndicator(isSmc ? 'smc' : key);
+            if (isSmc || key === 'bollinger' || key in emaPeriods || key === 'vwap') return;
             const range = chart.timeScale().getVisibleLogicalRange();
             if (range) {
                 allCharts().forEach(function (c) { c.timeScale().setVisibleLogicalRange(range); });
