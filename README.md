@@ -1,6 +1,6 @@
 # AI Trading Chart Analyzer
 
-ASP.NET Core MVC (.NET 9) app that shows a live Binance chart, asks an AI model to analyze it and draw trade setups on the chart, and backtests strategies.
+ASP.NET Core MVC (.NET 9) app that shows a live Binance chart, asks an AI model to analyze it and draw trade setups on the chart.
 
 ## Run
 
@@ -29,11 +29,11 @@ ASP.NET Core MVC (.NET 9) app that shows a live Binance chart, asks an AI model 
 
 ## Endpoints
 
-- `GET /api/market/klines`, `POST /api/analysis` (rate limited), `POST /api/backtest`, `GET /health`
+- `GET /api/market/klines`, `POST /api/analysis` (rate limited), `GET /health`
 
 ## Shortcuts
 
-`1`–`6` timeframe, `A` analyze, `B` backtest, `Esc` cancel tool / deselect / close panel.
+`1`–`6` timeframe, `A` analyze, `Esc` cancel tool / deselect / close panel.
 
 Chart: `+` `-` zoom, `←` `→` pan (Shift = fast), `Home` fit, `End` latest.
 

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc.Razor;
 using TradingChartAnalyzer.Features.Analysis;
-using TradingChartAnalyzer.Features.Backtest;
 using TradingChartAnalyzer.Features.MarketData;
 using TradingChartAnalyzer.Shared.Configuration;
 using TradingChartAnalyzer.Shared.Http;
@@ -28,8 +27,7 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
 builder.Services
     .AddMarketData(builder.Configuration)
-    .AddAnalysis(builder.Configuration)
-    .AddBacktest();
+    .AddAnalysis(builder.Configuration);
 
 var app = builder.Build();
 

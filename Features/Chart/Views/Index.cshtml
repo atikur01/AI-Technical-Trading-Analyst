@@ -54,7 +54,6 @@
 
         <div class="ml-auto flex shrink-0 items-center gap-2">
             <button type="button" id="analyze-button" class="btn btn-primary" title="Analyze (A)">Analyze with AI</button>
-            <button type="button" id="backtest-button" class="btn" title="Backtest (B)">Backtest</button>
             <button type="button" id="panel-toggle" class="btn" title="Toggle panel (Esc)" aria-label="Toggle panel">Panel</button>
         </div>
     </header>
@@ -129,10 +128,8 @@
         </main>
 
         <aside id="side-panel" class="fixed inset-x-0 bottom-0 z-30 flex h-[65vh] translate-y-full flex-col border-t border-tv-border bg-tv-panel transition-transform md:static md:h-auto md:w-96 md:translate-y-0 md:border-l md:border-t-0">
-            <div class="flex border-b border-tv-border">
-                <button type="button" class="tab is-active" data-tab="analysis">Analysis</button>
-                <button type="button" class="tab" data-tab="backtest">Backtest</button>
-                <button type="button" id="panel-close" class="px-3 text-tv-muted hover:text-tv-text md:hidden" aria-label="Close panel">✕</button>
+            <div class="flex justify-end border-b border-tv-border md:hidden">
+                <button type="button" id="panel-close" class="px-3 py-2 text-tv-muted hover:text-tv-text" aria-label="Close panel">✕</button>
             </div>
             <div class="min-h-0 flex-1 overflow-y-auto">
                 <section id="tab-analysis" class="space-y-3 p-3">
@@ -156,83 +153,11 @@
                             <ul class="w-full space-y-2 text-left text-xs text-tv-muted">
                                 <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Trend and structure across timeframes</li>
                                 <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Entry, stop loss and take profit setups</li>
-                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Drawn on the chart and ready to backtest</li>
+                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Drawn directly on the chart</li>
                             </ul>
                             <p class="text-xs text-tv-muted">Shortcut: press <span class="rounded border border-tv-border bg-tv-bg px-1.5 py-0.5 font-semibold text-tv-text">A</span></p>
                         </div>
                     </div>
-                </section>
-                <section id="tab-backtest" class="hidden p-3">
-                    <form id="backtest-form" class="space-y-3" autocomplete="off">
-                        <fieldset class="form-section">
-                            <legend class="section-title">Strategy</legend>
-                            <select id="bt-strategy" class="field" aria-label="Strategy">
-                                <option value="ema-cross">EMA Cross</option>
-                                <option value="rsi-reversal">RSI Reversal</option>
-                                <option value="fib-pullback">Fib Pullback</option>
-                                <option value="ai-setup">AI Setup Rules</option>
-                            </select>
-                            <div id="bt-setup-wrap" class="hidden">
-                                <label class="label" for="bt-setup">AI setup</label>
-                                <select id="bt-setup" class="field"></select>
-                            </div>
-                            <div id="bt-params" class="grid grid-cols-2 gap-2"></div>
-                        </fieldset>
-                        <fieldset class="form-section">
-                            <legend class="section-title">Period</legend>
-                            <div class="flex gap-1" id="bt-ranges">
-                                <button type="button" class="chip chip-btn" data-days="7">7D</button>
-                                <button type="button" class="chip chip-btn" data-days="30">30D</button>
-                                <button type="button" class="chip chip-btn" data-days="90">90D</button>
-                                <button type="button" class="chip chip-btn" data-days="180">6M</button>
-                                <button type="button" class="chip chip-btn" data-days="365">1Y</button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="label" for="bt-from">From</label>
-                                    <input id="bt-from" type="date" class="field" required />
-                                </div>
-                                <div>
-                                    <label class="label" for="bt-to">To</label>
-                                    <input id="bt-to" type="date" class="field" required />
-                                </div>
-                            </div>
-                        </fieldset>
-                        <fieldset class="form-section">
-                            <legend class="section-title">Capital &amp; costs</legend>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="label" for="bt-balance">Initial balance</label>
-                                    <div class="input-affix" data-affix="$">
-                                        <input id="bt-balance" type="number" class="field" value="10000" min="1" step="any" required />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="label" for="bt-risk">Risk / trade</label>
-                                    <div class="input-affix" data-affix="%">
-                                        <input id="bt-risk" type="number" class="field" value="1" min="0.01" max="100" step="any" required />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="label" for="bt-fee">Fee</label>
-                                    <div class="input-affix" data-affix="%">
-                                        <input id="bt-fee" type="number" class="field" value="0.1" min="0" max="5" step="any" required />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="label" for="bt-slippage">Slippage</label>
-                                    <div class="input-affix" data-affix="%">
-                                        <input id="bt-slippage" type="number" class="field" value="0.05" min="0" max="5" step="any" required />
-                                    </div>
-                                </div>
-                            </div>
-                        </fieldset>
-                        <div class="sticky bottom-0 -mx-3 border-t border-tv-border bg-tv-panel px-3 py-2">
-                            <button type="submit" id="bt-run" class="btn btn-primary w-full py-2">Run backtest</button>
-                        </div>
-                        <p class="text-xs text-tv-muted">Tip: validate a strategy on a date range different from the one you tuned it on to avoid overfitting.</p>
-                    </form>
-                    <div id="bt-result" class="mt-4"></div>
                 </section>
             </div>
         </aside>
@@ -264,6 +189,5 @@
     <script src="~/js/chart/chart-gestures.js" asp-append-version="true"></script>
     <script src="~/js/chart/symbol-search.js" asp-append-version="true"></script>
     <script src="~/js/analysis/analysis-panel.js" asp-append-version="true"></script>
-    <script src="~/js/backtest/backtest-panel.js" asp-append-version="true"></script>
     <script src="~/js/core/app.js" asp-append-version="true"></script>
 }

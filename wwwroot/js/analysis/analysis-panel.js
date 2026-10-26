@@ -62,7 +62,6 @@
             '<div>' + cell('Targets', targets, 'text-tv-up') + '</div>' +
             (chips ? '<div class="flex flex-wrap gap-1">' + chips + '</div>' : '') +
             (setup.invalidation ? '<p class="text-xs text-tv-muted"><span class="font-semibold text-tv-text">Invalidation:</span> ' + esc(setup.invalidation) + '</p>' : '') +
-            '<button type="button" class="btn w-full backtest-setup" data-setup-id="' + esc(setup.id) + '">Backtest this setup</button>' +
             '</div>';
     }
 
@@ -130,10 +129,6 @@
             $('#analysis-result')
                 .on('click', '.setup-card', function () {
                     selectSetup($(this).data('setup-id'));
-                })
-                .on('click', '.backtest-setup', function (event) {
-                    event.stopPropagation();
-                    App.backtestPanel.runForSetup($(this).data('setup-id'));
                 })
                 .on('click', '#analysis-retry, #analysis-start', App.analysisPanel.run);
 

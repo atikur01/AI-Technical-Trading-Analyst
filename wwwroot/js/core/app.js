@@ -11,15 +11,8 @@
         else $panel.toggleClass('translate-y-full', !open);
     }
 
-    function showTab(tab) {
-        $('.tab').removeClass('is-active').filter('[data-tab="' + tab + '"]').addClass('is-active');
-        $('#tab-analysis').toggleClass('hidden', tab !== 'analysis');
-        $('#tab-backtest').toggleClass('hidden', tab !== 'backtest');
-    }
-
     App.panel = {
-        open: function (tab) {
-            if (tab) showTab(tab);
+        open: function () {
             setOpen(true);
         },
         close: function () {
@@ -62,7 +55,6 @@
                 event.preventDefault();
                 App.symbolSearch.open();
             } else if (key === 'a') App.analysisPanel.run();
-            else if (key === 'b') App.panel.open('backtest');
             else if (toolKeys[key]) App.drawingTools.setTool(toolKeys[key]);
             else if (key === 'delete' || key === 'backspace') App.drawingTools.deleteSelected();
             else if (key === 'escape' && !App.drawingTools.cancel()) App.panel.close();
@@ -85,7 +77,6 @@
             App.chartCore.setIndicator($(this).val(), $(this).is(':checked'));
         });
 
-        $('.tab').on('click', function () { showTab($(this).data('tab')); });
         $('#panel-toggle').on('click', App.panel.toggle);
         $('#panel-close').on('click', App.panel.close);
         $('#chart-retry').on('click', function () { App.chartCore.load(); });
@@ -102,7 +93,6 @@
         App.chartGestures.init();
         App.symbolSearch.init();
         App.analysisPanel.init();
-        App.backtestPanel.init();
         bindToolbar();
         bindKeyboard();
 

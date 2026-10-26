@@ -1,7 +1,7 @@
 {
   "name": "tradingchartanalyzer",
   "version": "1.0.0",
-  "description": "ASP.NET Core MVC (.NET 9) app that shows a live Binance chart, asks an AI model to analyze it and draw trade setups on the chart, and backtests strategies.",
+  "description": "ASP.NET Core MVC (.NET 9) app that shows a live Binance chart, asks an AI model to analyze it and draw trade setups on the chart.",
   "main": "tailwind.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

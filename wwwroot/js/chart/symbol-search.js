@@ -57,7 +57,6 @@
         App.drawingRenderer.clear();
         App.manualDrawings.load();
         App.analysisPanel.reset();
-        App.chartCore.clearMarkers('backtest');
         App.chartCore.load();
         $(document).trigger('symbol:changed');
     }
