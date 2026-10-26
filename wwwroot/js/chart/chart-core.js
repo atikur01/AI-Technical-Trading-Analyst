@@ -19,6 +19,7 @@
 
     let chart = null;
     let candleSeries = null;
+    let futureSeries = null;
     let overlaySeries = {};
     let rsiPane = null;
     let macdPane = null;
@@ -247,6 +248,17 @@
 
     const INITIAL_VISIBLE_BARS = 120;
     const RIGHT_OFFSET_BARS = 12;
+    const FUTURE_BARS = 500;
+
+    function refreshFutureTimes() {
+        const candles = App.state.candles;
+        if (!candles.length) return;
+        const step = App.timeframeStep();
+        const lastTime = candles[candles.length - 1].time;
+        const future = [];
+        for (let i = 1; i <= FUTURE_BARS; i++) future.push({ time: lastTime + i * step });
+        futureSeries.setData(future);
+    }
 
     function showLatest(count) {
         chart.timeScale().setVisibleLogicalRange({ from: count - INITIAL_VISIBLE_BARS, to: count - 1 + RIGHT_OFFSET_BARS });
@@ -283,6 +295,12 @@
                 }
             });
 
+            futureSeries = chart.addLineSeries({
+                lastValueVisible: false,
+                priceLineVisible: false,
+                crosshairMarkerVisible: false
+            });
+
             chart.subscribeCrosshairMove(function (param) {
                 const bar = param.seriesData && param.seriesData.get(candleSeries);
                 if (bar) {
@@ -309,6 +327,7 @@
                     const candles = rows.map(toCandle);
                     App.state.candles = candles;
                     candleSeries.setData(candles);
+                    refreshFutureTimes();
                     refreshIndicators();
                     refreshMarkers();
                     showLatest(candles.length);
@@ -331,6 +350,7 @@
             if (candle.time === last.time) candles[candles.length - 1] = candle;
             else candles.push(candle);
             candleSeries.update(candle);
+            if (candle.time !== last.time) refreshFutureTimes();
             refreshIndicators();
             updateLastPrice();
         },
