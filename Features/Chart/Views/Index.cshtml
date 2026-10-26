@@ -1,7 +1,7 @@
 @model TradingChartAnalyzer.Features.Chart.ChartViewModel
 @{
     ViewData["Title"] = Model.Symbol;
-    var timeframes = new[] { "1m", "5m", "15m", "1h", "4h", "1d" };
+    var timeframes = new[] { "1m", "5m", "15m", "1h", "4h", "1d", "1w", "1M" };
     var indicators = new (string Key, string Label, bool Checked)[]
     {
         ("ema20", "EMA 20", true),
@@ -99,6 +99,7 @@
                         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
                     </button>
                 </div>
+                <div id="chart-context-menu" class="context-menu" role="menu"></div>
                 <div id="chart-loading"class="absolute inset-0 z-20 flex items-center justify-center bg-tv-bg/70 text-sm text-tv-muted">Loading chart…</div>
                 <div id="chart-error" class="absolute inset-0 z-20 hidden flex-col items-center justify-center gap-3 bg-tv-bg text-sm text-tv-down">
                     <span id="chart-error-text"></span>
@@ -233,6 +234,7 @@
     <script src="~/js/drawings/manual-drawings.js" asp-append-version="true"></script>
     <script src="~/js/drawings/drawing-tools.js" asp-append-version="true"></script>
     <script src="~/js/chart/chart-controls.js" asp-append-version="true"></script>
+    <script src="~/js/chart/chart-gestures.js" asp-append-version="true"></script>
     <script src="~/js/analysis/analysis-panel.js" asp-append-version="true"></script>
     <script src="~/js/backtest/backtest-panel.js" asp-append-version="true"></script>
     <script src="~/js/core/app.js" asp-append-version="true"></script>

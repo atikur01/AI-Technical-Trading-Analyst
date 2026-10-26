@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using TradingChartAnalyzer.Features.Analysis.Models;
 using TradingChartAnalyzer.Features.Indicators;
+using TradingChartAnalyzer.Features.MarketData;
 
 namespace TradingChartAnalyzer.Features.Analysis;
 
@@ -8,7 +9,7 @@ public static partial class AnalysisResultValidator
 {
     private const int MaxSetups = 3;
     private const int MaxLabelLength = 60;
-    private const decimal MinRiskReward = 1m;
+    private const decimal MinRiskReward = 2m;
     private const decimal RangeMargin = 0.2m;
 
     private static readonly string[] Trends = ["bullish", "bearish", "ranging"];
@@ -33,7 +34,7 @@ public static partial class AnalysisResultValidator
         bool PointOk(ChartPoint point) => PriceOk(point.Price) && TimeOk(point.Time);
 
         result.Analysis = NormalizeAnalysis(raw.Analysis, PriceOk, result.Warnings);
-        result.Setups = ValidateSetups(raw.Setups, PriceOk, result.Warnings);
+        result.Setups = ValidateSetups(raw.Setups, PriceOk, AnalysisTrendFilter.AllowedDirection(snapshot), result.Warnings);
 
         var setupsById = result.Setups.ToDictionary(s => s.Id);
         var validated = new List<Drawing>();
@@ -93,14 +94,14 @@ public static partial class AnalysisResultValidator
         return analysis;
     }
 
-    private static List<TradeSetup> ValidateSetups(List<TradeSetup> setups, Func<decimal, bool> priceOk, List<string> warnings)
+    private static List<TradeSetup> ValidateSetups(List<TradeSetup> setups, Func<decimal, bool> priceOk, string? allowedDirection, List<string> warnings)
     {
         var valid = new List<TradeSetup>();
 
         foreach (var setup in setups)
         {
             setup.Direction = setup.Direction?.Trim().ToLowerInvariant() ?? string.Empty;
-            var reason = Check(setup, priceOk);
+            var reason = Check(setup, priceOk) ?? CheckTrend(setup, allowedDirection);
             if (reason is not null)
             {
                 warnings.Add($"Dropped setup '{setup.Id}': {reason}.");
@@ -156,6 +157,11 @@ public static partial class AnalysisResultValidator
         var risk = Math.Abs(setup.Entry - setup.StopLoss);
         return reward / risk < MinRiskReward ? "risk-reward below minimum" : null;
     }
+
+    private static string? CheckTrend(TradeSetup setup, string? allowedDirection) =>
+        allowedDirection is not null && setup.Direction != allowedDirection
+            ? $"against the {AnalysisTrendFilter.TrendTimeframe.ToInterval()} EMA200 trend"
+            : null;
 
     private static Drawing? NormalizeDrawing(
         Drawing drawing,

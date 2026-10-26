@@ -7,7 +7,9 @@ public enum Timeframe
     M15,
     H1,
     H4,
-    D1
+    D1,
+    W1,
+    MN1
 }
 
 public static class TimeframeExtensions
@@ -19,7 +21,9 @@ public static class TimeframeExtensions
         [Timeframe.M15] = ("15m", 900_000L),
         [Timeframe.H1] = ("1h", 3_600_000L),
         [Timeframe.H4] = ("4h", 14_400_000L),
-        [Timeframe.D1] = ("1d", 86_400_000L)
+        [Timeframe.D1] = ("1d", 86_400_000L),
+        [Timeframe.W1] = ("1w", 604_800_000L),
+        [Timeframe.MN1] = ("1M", 2_592_000_000L)
     };
 
     public static string ToInterval(this Timeframe timeframe) => Map[timeframe].Interval;
@@ -30,7 +34,7 @@ public static class TimeframeExtensions
     {
         foreach (var (key, value) in Map)
         {
-            if (string.Equals(value.Interval, interval, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(value.Interval, interval, StringComparison.Ordinal))
             {
                 timeframe = key;
                 return true;

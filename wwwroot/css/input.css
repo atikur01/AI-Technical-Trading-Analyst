@@ -122,6 +122,26 @@
   .dropdown-menu.is-open {
     @apply block;
   }
+
+  .context-menu {
+    @apply absolute z-30 hidden min-w-[13rem] rounded-lg border border-tv-border bg-tv-panel py-1 shadow-xl;
+  }
+
+  .context-menu.is-open {
+    @apply block;
+  }
+
+  .context-item {
+    @apply flex w-full items-center justify-between gap-6 px-3 py-1.5 text-left text-sm text-tv-text transition hover:bg-tv-border focus:bg-tv-border focus:outline-none;
+  }
+
+  .context-hint {
+    @apply text-xs text-tv-muted;
+  }
+
+  .context-sep {
+    @apply my-1 h-px bg-tv-border;
+  }
 }
 
 html,

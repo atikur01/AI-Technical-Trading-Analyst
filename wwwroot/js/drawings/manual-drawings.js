@@ -2,9 +2,16 @@
     const ANCHOR_TOLERANCE = 9;
     const STORAGE_PREFIX = 'manualDrawings:';
 
+    const HISTORY_LIMIT = 50;
+    const PASTE_OFFSET_BARS = 3;
+    const PASTE_OFFSET_PRICE = 0.002;
+
     let items = [];
     let selected = null;
     let nextId = 1;
+    let history = [];
+    let future = [];
+    let clipboard = null;
 
     function storageKey() {
         return STORAGE_PREFIX + App.state.symbol;
@@ -29,12 +36,29 @@
         }
     }
 
-    function save() {
+    function snapshot() {
+        return JSON.stringify(items.map(function (item) { return item.drawing; }));
+    }
+
+    function persist(serialized) {
         try {
-            localStorage.setItem(storageKey(), JSON.stringify(items.map(function (item) { return item.drawing; })));
+            localStorage.setItem(storageKey(), serialized);
         } catch (e) {
             return;
         }
+    }
+
+    function record() {
+        const serialized = snapshot();
+        if (history[history.length - 1] === serialized) return serialized;
+        history.push(serialized);
+        if (history.length > HISTORY_LIMIT) history.shift();
+        future = [];
+        return serialized;
+    }
+
+    function save() {
+        persist(record());
     }
 
     function attach(drawing) {
@@ -46,14 +70,62 @@
         return item;
     }
 
+    function detachAll() {
+        items.forEach(function (item) { App.chartCore.detachPrimitive(item.primitive); });
+        items = [];
+        selected = null;
+    }
+
+    function restore(serialized) {
+        detachAll();
+        JSON.parse(serialized).forEach(attach);
+        persist(serialized);
+    }
+
     App.manualDrawings = {
         load: function () {
             try {
-                const stored = JSON.parse(localStorage.getItem(storageKey()) || '[]');
-                stored.forEach(attach);
+                JSON.parse(localStorage.getItem(storageKey()) || '[]').forEach(attach);
             } catch (e) {
-                return;
+                detachAll();
             }
+            history = [snapshot()];
+            future = [];
+        },
+
+        undo: function () {
+            if (history.length < 2) return false;
+            future.push(history.pop());
+            restore(history[history.length - 1]);
+            return true;
+        },
+
+        redo: function () {
+            if (!future.length) return false;
+            history.push(future.pop());
+            restore(history[history.length - 1]);
+            return true;
+        },
+
+        copy: function (item) {
+            if (!item) return false;
+            clipboard = JSON.stringify(item.drawing);
+            return true;
+        },
+
+        hasClipboard: function () {
+            return clipboard !== null;
+        },
+
+        paste: function () {
+            if (clipboard === null) return null;
+            const item = attach(JSON.parse(clipboard));
+            if (!item) return null;
+            const first = pointRefs(item.drawing)[0];
+            App.manualDrawings.moveBy(item, App.timeframeStep() * PASTE_OFFSET_BARS, first.price * PASTE_OFFSET_PRICE);
+            clipboard = JSON.stringify(item.drawing);
+            App.manualDrawings.commit(item);
+            return item;
         },
 
         add: function (drawing) {
@@ -81,11 +153,7 @@
         },
 
         clear: function () {
-            items.slice().forEach(function (item) {
-                App.chartCore.detachPrimitive(item.primitive);
-            });
-            items = [];
-            selected = null;
+            detachAll();
             save();
         },
 

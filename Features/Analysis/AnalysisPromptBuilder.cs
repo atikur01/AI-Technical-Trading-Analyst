@@ -11,6 +11,9 @@ public static class AnalysisPromptBuilder
         "You receive a pre-computed market snapshot for BTCUSDT across multiple timeframes. " +
         "Never invent numbers: only use prices and timestamps present in the snapshot. " +
         "Analyze top-down (HTF to LTF), identify trend, structure, key levels, liquidity and confluence. " +
+        "Backtests on BTC and ETH show only trend-following setups have an edge: trade strictly in the direction of the 4h trend (price above the 4h EMA200 allows longs only, below allows shorts only) and never propose counter-trend or reversal trades. " +
+        "Backtests show no edge on timeframes below 4h even with the trend filter, so on lower timeframes be strict and prefer returning no setups unless the 4h trend, 4h structure and the primary timeframe all agree. " +
+        "Place stops 1.5 to 2 ATR of the primary timeframe from entry beyond structure, and take profit at 2 to 3 times the risk. " +
         "Propose at most 3 high-quality setups with minimum 1:2 risk-reward; if no valid setup exists return an empty setups array and explain why. " +
         "Produce drawings that a professional would put on the chart to justify the analysis. " +
         "Respond ONLY with JSON matching the given schema.";
@@ -52,7 +55,9 @@ public static class AnalysisPromptBuilder
     private const string Rules =
         "Rules: all times are unix seconds taken from the snapshot candles or swings (never future times except position boxes at the latest candle). " +
         "Every price must lie inside snapshot.validRange. For long setups stopLoss < entry < every takeProfit; for short setups the reverse. " +
-        "Each setup must have one position drawing. Respond with a single JSON object and nothing else.";
+        "Each setup must have one position drawing. " +
+        "For rules.indicator prefer \"ema\" with params {\"fast\":9,\"slow\":50,\"atrStop\":2,\"rewardRisk\":2}, the rule set that held up in out-of-sample backtests; use \"fib\", \"rsi\" or \"structure\" only when clearly better justified. " +
+        "Respond with a single JSON object and nothing else.";
 
     public static string BuildUserPrompt(MarketSnapshot snapshot) =>
         $"JSON schema:\n{Schema}\n\n{Rules}\n\nMarket snapshot:\n{JsonSerializer.Serialize(snapshot, AppJson.Options)}";

@@ -41,15 +41,22 @@
         }, 'image/png');
     }
 
+    function toggleAuto() {
+        App.chartCore.setAutoScale(!App.chartCore.isAutoScale());
+        syncButtons();
+    }
+
     App.chartControls = {
+        syncButtons: syncButtons,
+        reset: reset,
+        screenshot: screenshot,
+        toggleAuto: toggleAuto,
+
         init: function () {
             $('#ctl-fit').on('click', App.chartCore.fit);
             $('#ctl-latest').on('click', App.chartCore.scrollToLatest);
             $('#ctl-reset').on('click', reset);
-            $('#ctl-auto').on('click', function () {
-                App.chartCore.setAutoScale(!App.chartCore.isAutoScale());
-                syncButtons();
-            });
+            $('#ctl-auto').on('click', toggleAuto);
             $('#ctl-log').on('click', function () { setPriceMode('log'); });
             $('#ctl-percent').on('click', function () { setPriceMode('percent'); });
             $('#ctl-screenshot').on('click', screenshot);

@@ -23,7 +23,12 @@
     let overlaySeries = {};
     let rsiPane = null;
     let macdPane = null;
+    const MIN_PRICE_ZOOM = 0.05;
+    const MAX_PRICE_ZOOM = 20;
+
     let loadToken = 0;
+    let priceShift = 0;
+    let priceZoom = 1;
     let syncing = false;
     const markerSources = {};
 
@@ -229,6 +234,13 @@
         return low + (time - candles[low].time) / step;
     }
 
+    const INITIAL_VISIBLE_BARS = 120;
+    const RIGHT_OFFSET_BARS = 12;
+
+    function showLatest(count) {
+        chart.timeScale().setVisibleLogicalRange({ from: count - INITIAL_VISIBLE_BARS, to: count - 1 + RIGHT_OFFSET_BARS });
+    }
+
     function refreshMarkers() {
         const merged = [];
         Object.keys(markerSources).forEach(function (source) {
@@ -247,9 +259,19 @@
                 borderUpColor: theme.up,
                 borderDownColor: theme.down,
                 wickUpColor: theme.up,
-                wickDownColor: theme.down
+                wickDownColor: theme.down,
+                autoscaleInfoProvider: function (baseImpl) {
+                    const info = baseImpl();
+                    if (!info || (!priceShift && priceZoom === 1)) return info;
+                    const center = (info.priceRange.minValue + info.priceRange.maxValue) / 2 + priceShift;
+                    const half = ((info.priceRange.maxValue - info.priceRange.minValue) / 2) * priceZoom;
+                    return {
+                        priceRange: { minValue: center - half, maxValue: center + half },
+                        margins: info.margins
+                    };
+                }
             });
-            volumeSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '', priceLineVisible: false, lastValueVisible: false });
+            volumeSeries =chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '', priceLineVisible: false, lastValueVisible: false });
             volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
 
             chart.subscribeCrosshairMove(function (param) {
@@ -272,7 +294,7 @@
             $('#chart-error').addClass('hidden').removeClass('flex');
             $('#chart-loading').removeClass('hidden');
 
-            return App.api.get('/api/market/klines', { symbol: App.state.symbol, interval: App.state.timeframe, limit: 1000 })
+            return App.api.get('/api/market/klines', { symbol: App.state.symbol, interval: App.state.timeframe, limit: 500 })
                 .done(function (rows) {
                     if (token !== loadToken) return;
                     const candles = rows.map(toCandle);
@@ -281,8 +303,7 @@
                     volumeSeries.setData(candles.map(volumeBar));
                     refreshIndicators();
                     refreshMarkers();
-                    chart.timeScale().fitContent();
-                    chart.timeScale().scrollToPosition(12, false);
+                    showLatest(candles.length);
                     renderLegend(candles[candles.length - 1]);
                     updateLastPrice();
                     $('#chart-loading').addClass('hidden');
@@ -413,13 +434,38 @@
 
         setPriceMode: function (mode) {
             const modes = LightweightCharts.PriceScaleMode;
+            priceShift = 0;
+            priceZoom = 1;
             chart.priceScale('right').applyOptions({
                 mode: mode === 'log' ? modes.Logarithmic : mode === 'percent' ? modes.Percentage : modes.Normal
             });
         },
 
         setAutoScale: function (enabled) {
+            priceShift = 0;
+            priceZoom = 1;
             chart.priceScale('right').applyOptions({ autoScale: enabled });
+        },
+
+        zoomPrice: function (factor) {
+            const scale = chart.priceScale('right');
+            if (scale.options().mode !== LightweightCharts.PriceScaleMode.Normal) return;
+            priceZoom = Math.min(MAX_PRICE_ZOOM, Math.max(MIN_PRICE_ZOOM, priceZoom * factor));
+            scale.applyOptions({ autoScale: true });
+        },
+
+        isOverPriceScale: function (x, y) {
+            return x > chart.timeScale().width() && y <= this.plotHeight();
+        },
+
+        panPrice: function (deltaY) {
+            const scale = chart.priceScale('right');
+            if (!deltaY || !scale.options().autoScale || scale.options().mode !== LightweightCharts.PriceScaleMode.Normal) return;
+            const top = candleSeries.coordinateToPrice(0);
+            const moved = candleSeries.coordinateToPrice(deltaY);
+            if (top == null || moved == null) return;
+            priceShift += top - moved;
+            scale.applyOptions({ autoScale: true });
         },
 
         isAutoScale: function () {

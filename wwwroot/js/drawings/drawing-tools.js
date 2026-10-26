@@ -7,9 +7,15 @@
     let drag = null;
     let container = null;
 
+    function pointer(event) {
+        const native = event.originalEvent || event;
+        return (native.changedTouches && native.changedTouches[0]) || native;
+    }
+
     function relative(event) {
         const rect = container.getBoundingClientRect();
-        return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        const source = pointer(event);
+        return { x: source.clientX - rect.left, y: source.clientY - rect.top };
     }
 
     function inPlot(p) {
@@ -115,7 +121,9 @@
         event.stopPropagation();
         event.preventDefault();
         drag = state;
-        $(document).on('mousemove.drawdrag', onDragMove).on('mouseup.drawdrag', endDrag);
+        $(document)
+            .on('mousemove.drawdrag touchmove.drawdrag', onDragMove)
+            .on('mouseup.drawdrag touchend.drawdrag touchcancel.drawdrag', endDrag);
     }
 
     function onDragMove(event) {
@@ -139,7 +147,14 @@
     }
 
     function onMouseDown(event) {
-        if (event.button !== 0) return;
+        if (event.button === 0) onPress(event);
+    }
+
+    function onTouchStart(event) {
+        if (event.touches.length === 1) onPress(event);
+    }
+
+    function onPress(event) {
         const p = relative(event);
         if (tool === 'pan' || !inPlot(p)) return;
         const c = App.chartCore.pointToChart(p.x, p.y);
@@ -188,6 +203,7 @@
             container = App.chartCore.container();
             container.addEventListener('mousedown', onMouseDown, true);
             container.addEventListener('mousemove', onMouseMove, true);
+            container.addEventListener('touchstart', onTouchStart, { capture: true, passive: false });
             App.manualDrawings.load();
 
             $('[data-tool]').on('click', function () {
@@ -229,6 +245,38 @@
 
         deleteSelected: function () {
             return App.manualDrawings.removeSelected();
+        },
+
+        undo: function () {
+            cancelPending();
+            return App.manualDrawings.undo();
+        },
+
+        redo: function () {
+            return App.manualDrawings.redo();
+        },
+
+        copySelected: function () {
+            return App.manualDrawings.copy(App.manualDrawings.selected());
+        },
+
+        paste: function () {
+            return !!App.manualDrawings.paste();
+        },
+
+        duplicate: function (item) {
+            App.manualDrawings.copy(item);
+            return App.drawingTools.paste();
+        },
+
+        handleShortcut: function (event) {
+            switch (event.key.toLowerCase()) {
+                case 'z': return event.shiftKey ? App.drawingTools.redo() : App.drawingTools.undo();
+                case 'y': return App.drawingTools.redo();
+                case 'c': return App.drawingTools.copySelected();
+                case 'v': return App.drawingTools.paste();
+                default: return false;
+            }
         }
     };
 })(jQuery, window.App);

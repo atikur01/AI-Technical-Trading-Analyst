@@ -40,11 +40,16 @@
     }
 
     function bindKeyboard() {
-        const timeframes = ['1m', '5m', '15m', '1h', '4h', '1d'];
+        const timeframes = ['1m', '5m', '15m', '1h', '4h', '1d', '1w', '1M'];
         const toolKeys = { v: 'cursor', p: 'pan', t: 'trendline', h: 'horizontal', f: 'fibonacci', r: 'rect', m: 'measure' };
         $(document).on('keydown', function (event) {
-            if (event.ctrlKey || event.metaKey || event.altKey) return;
             if ($(event.target).is('input, select, textarea')) return;
+
+            if (event.ctrlKey || event.metaKey) {
+                if (!event.altKey && App.drawingTools.handleShortcut(event)) event.preventDefault();
+                return;
+            }
+            if (event.altKey) return;
 
             if (App.chartControls.handleKey(event)) {
                 event.preventDefault();
@@ -52,7 +57,7 @@
             }
 
             const key = event.key.toLowerCase();
-            if (key >= '1' && key <= '6') setTimeframe(timeframes[Number(key) - 1]);
+            if (key >= '1' && key <= '8') setTimeframe(timeframes[Number(key) - 1]);
             else if (key === 'a') App.analysisPanel.run();
             else if (key === 'b') App.panel.open('backtest');
             else if (toolKeys[key]) App.drawingTools.setTool(toolKeys[key]);
@@ -91,6 +96,7 @@
         App.chartCore.init();
         App.chartControls.init();
         App.drawingTools.init();
+        App.chartGestures.init();
         App.analysisPanel.init();
         App.backtestPanel.init();
         bindToolbar();
