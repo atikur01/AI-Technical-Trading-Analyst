@@ -309,10 +309,13 @@
             $(document).on('timeframe:changed', function () {
                 App.chartCore.clearMarkers('backtest');
                 applyDefaultDates();
+                ensureMinimumRange();
+                syncRangeAvailability();
             });
         },
 
         run: function () {
+            ensureMinimumRange();
             const request = collectRequest();
             if (request.strategy === 'ai-setup' && !request.setup) {
                 App.toast.show('Run an AI analysis and pick a setup first.', 'warning');
