@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AI Trading Chart Analyzer</title>
+    <link rel="icon" href="~/favicon.ico" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="h-full overflow-hidden bg-tv-bg text-tv-text antialiased">
+    @RenderBody()
+    <div id="toast-container" class="pointer-events-none fixed right-4 top-16 z-50 flex w-80 flex-col gap-2"></div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/lightweight-charts/lightweight-charts.standalone.production.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

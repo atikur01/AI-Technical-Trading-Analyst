@@ -1,0 +1,211 @@
+@model TradingChartAnalyzer.Features.Chart.ChartViewModel
+@{
+    ViewData["Title"] = Model.Symbol;
+    var timeframes = new[] { "1m", "5m", "15m", "1h", "4h", "1d" };
+    var indicators = new (string Key, string Label, bool Checked)[]
+    {
+        ("ema20", "EMA 20", true),
+        ("ema50", "EMA 50", true),
+        ("ema200", "EMA 200", false),
+        ("bollinger", "Bollinger Bands", false),
+        ("vwap", "VWAP", false),
+        ("rsi", "RSI (14)", false),
+        ("macd", "MACD (12,26,9)", false)
+    };
+}
+
+<div id="app" class="flex h-full flex-col" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl">
+    <header class="flex flex-wrap items-center gap-2 border-b border-tv-border bg-tv-panel px-3 py-2">
+        <div class="mr-2 flex items-center gap-2">
+            <span class="text-base font-bold tracking-tight">@Model.Symbol</span>
+            <span id="last-price" class="text-sm font-semibold text-tv-muted">--</span>
+        </div>
+
+        <nav class="flex items-center gap-0.5" aria-label="Timeframe">
+            @foreach (var timeframe in timeframes)
+            {
+                <button type="button" class="btn-tf" data-timeframe="@timeframe">@timeframe</button>
+            }
+        </nav>
+
+        <div class="relative">
+            <button type="button" id="indicator-toggle" class="btn" aria-haspopup="true">Indicators</button>
+            <div id="indicator-menu" class="dropdown-menu">
+                @foreach (var indicator in indicators)
+                {
+                    <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-tv-border">
+                        <input type="checkbox" class="indicator-check accent-tv-accent" value="@indicator.Key" checked="@indicator.Checked" />
+                        @indicator.Label
+                    </label>
+                }
+            </div>
+        </div>
+
+        <div class="ml-auto flex items-center gap-2">
+            <button type="button" id="analyze-button" class="btn btn-primary" title="Analyze (A)">Analyze with AI</button>
+            <button type="button" id="backtest-button" class="btn" title="Backtest (B)">Backtest</button>
+            <button type="button" id="panel-toggle" class="btn" title="Toggle panel (Esc)" aria-label="Toggle panel">Panel</button>
+        </div>
+    </header>
+
+    <div class="relative flex min-h-0 flex-1">
+        <main class="flex min-w-0 flex-1 flex-col">
+            <div class="relative min-h-0 flex-1">
+                <div id="chart-main" class="h-full"></div>
+                <div id="chart-legend" class="pointer-events-none absolute left-3 top-2 z-10 flex flex-wrap gap-x-3 text-xs text-tv-muted"></div>
+                <div id="draw-toolbar" class="absolute left-2 top-10 z-10 flex flex-col gap-1 rounded-lg border border-tv-border bg-tv-panel/95 p-1 shadow-lg">
+                    <button type="button" class="tool-btn is-active" data-tool="cursor" title="Cursor (V)" aria-label="Cursor">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 3l14 8-6 2-3 6z" /></svg>
+                    </button>
+                    <button type="button" class="tool-btn" data-tool="trendline" title="Trend line (T)" aria-label="Trend line">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19L20 5" /><circle cx="4" cy="19" r="2" /><circle cx="20" cy="5" r="2" /></svg>
+                    </button>
+                    <button type="button" class="tool-btn" data-tool="horizontal" title="Horizontal line (H)" aria-label="Horizontal line">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h18" /><circle cx="12" cy="12" r="2" /></svg>
+                    </button>
+                    <button type="button" class="tool-btn" data-tool="fibonacci" title="Fib retracement (F)" aria-label="Fib retracement">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 5h16M4 10h16M4 15h16M4 20h16" /></svg>
+                    </button>
+                    <button type="button" class="tool-btn" data-tool="rect" title="Rectangle (R)" aria-label="Rectangle">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1" /></svg>
+                    </button>
+                    <button type="button" class="tool-btn" data-tool="measure" title="Measure (M)" aria-label="Measure">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17L17 3l4 4L7 21z" /><path d="M7 13l2 2M10 10l2 2M13 7l2 2" /></svg>
+                    </button>
+                    <div class="my-0.5 h-px bg-tv-border"></div>
+                    <button type="button" id="tool-delete" class="tool-btn" title="Delete selected (Del)" aria-label="Delete selected">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
+                    </button>
+                    <button type="button" id="tool-clear" class="tool-btn" title="Remove all drawings" aria-label="Remove all drawings">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                </div>
+                <div id="chart-controls" class="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-lg border border-tv-border bg-tv-panel/95 p-1 shadow-lg">
+                    <button type="button" id="ctl-zoom-out" class="ctl-btn" title="Zoom out (-)" aria-label="Zoom out">−</button>
+                    <button type="button" id="ctl-zoom-in" class="ctl-btn" title="Zoom in (+)" aria-label="Zoom in">+</button>
+                    <span class="mx-0.5 h-4 w-px bg-tv-border"></span>
+                    <button type="button" id="ctl-fit" class="ctl-btn" title="Fit all data (Home)">Fit</button>
+                    <button type="button" id="ctl-latest" class="ctl-btn" title="Go to latest (End)">Latest</button>
+                    <button type="button" id="ctl-reset" class="ctl-btn" title="Reset chart">Reset</button>
+                    <span class="mx-0.5 h-4 w-px bg-tv-border"></span>
+                    <button type="button" id="ctl-auto" class="ctl-btn" title="Auto scale">Auto</button>
+                    <button type="button" id="ctl-log" class="ctl-btn" title="Logarithmic scale">Log</button>
+                    <button type="button" id="ctl-percent" class="ctl-btn" title="Percentage scale">%</button>
+                    <span class="mx-0.5 h-4 w-px bg-tv-border"></span>
+                    <button type="button" id="ctl-screenshot" class="ctl-btn" title="Save screenshot" aria-label="Save screenshot">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+                    </button>
+                </div>
+                <div id="chart-loading"class="absolute inset-0 z-20 flex items-center justify-center bg-tv-bg/70 text-sm text-tv-muted">Loading chart…</div>
+                <div id="chart-error" class="absolute inset-0 z-20 hidden flex-col items-center justify-center gap-3 bg-tv-bg text-sm text-tv-down">
+                    <span id="chart-error-text"></span>
+                    <button type="button" id="chart-retry" class="btn">Retry</button>
+                </div>
+            </div>
+            <div id="pane-rsi" class="hidden h-32 border-t border-tv-border">
+                <div id="chart-rsi" class="h-full"></div>
+            </div>
+            <div id="pane-macd" class="hidden h-32 border-t border-tv-border">
+                <div id="chart-macd" class="h-full"></div>
+            </div>
+            <footer class="border-t border-tv-border bg-tv-panel px-3 py-1 text-center text-xs text-tv-muted">
+                This is not financial advice. / এটি আর্থিক পরামর্শ নয়।
+            </footer>
+        </main>
+
+        <aside id="side-panel" class="fixed inset-x-0 bottom-0 z-30 flex h-[65vh] translate-y-full flex-col border-t border-tv-border bg-tv-panel transition-transform md:static md:h-auto md:w-96 md:translate-y-0 md:border-l md:border-t-0">
+            <div class="flex border-b border-tv-border">
+                <button type="button" class="tab is-active" data-tab="analysis">Analysis</button>
+                <button type="button" class="tab" data-tab="backtest">Backtest</button>
+                <button type="button" id="panel-close" class="px-3 text-tv-muted hover:text-tv-text md:hidden" aria-label="Close panel">✕</button>
+            </div>
+            <div class="min-h-0 flex-1 overflow-y-auto">
+                <section id="tab-analysis" class="space-y-3 p-3">
+                    <div id="drawing-controls" class="hidden items-center gap-2">
+                        <button type="button" id="drawings-toggle" class="btn flex-1">Hide drawings</button>
+                        <button type="button" id="drawings-clear" class="btn flex-1">Clear</button>
+                    </div>
+                    <label id="keep-drawings-wrap" class="hidden cursor-pointer items-center gap-2 text-xs text-tv-muted">
+                        <input type="checkbox" id="keep-drawings" class="accent-tv-accent" /> Keep drawings when timeframe changes
+                    </label>
+                    <div id="analysis-result">
+                        <div class="rounded-lg border border-dashed border-tv-border p-6 text-center text-sm text-tv-muted">
+                            Press <span class="font-semibold text-tv-text">Analyze with AI</span> to get a top-down analysis, trade setups and chart drawings.
+                        </div>
+                    </div>
+                </section>
+                <section id="tab-backtest" class="hidden p-3">
+                    <form id="backtest-form" class="space-y-3" autocomplete="off">
+                        <div>
+                            <label class="label" for="bt-strategy">Strategy</label>
+                            <select id="bt-strategy" class="field">
+                                <option value="ema-cross">EMA Cross</option>
+                                <option value="rsi-reversal">RSI Reversal</option>
+                                <option value="fib-pullback">Fib Pullback</option>
+                                <option value="ai-setup">AI Setup Rules</option>
+                            </select>
+                        </div>
+                        <div id="bt-setup-wrap" class="hidden">
+                            <label class="label" for="bt-setup">AI setup</label>
+                            <select id="bt-setup" class="field"></select>
+                        </div>
+                        <div id="bt-params" class="grid grid-cols-2 gap-2"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="label" for="bt-from">From</label>
+                                <input id="bt-from" type="date" class="field" required />
+                            </div>
+                            <div>
+                                <label class="label" for="bt-to">To</label>
+                                <input id="bt-to" type="date" class="field" required />
+                            </div>
+                            <div>
+                                <label class="label" for="bt-balance">Initial balance</label>
+                                <input id="bt-balance" type="number" class="field" value="10000" min="1" step="any" required />
+                            </div>
+                            <div>
+                                <label class="label" for="bt-risk">Risk % / trade</label>
+                                <input id="bt-risk" type="number" class="field" value="1" min="0.01" max="100" step="any" required />
+                            </div>
+                            <div>
+                                <label class="label" for="bt-fee">Fee %</label>
+                                <input id="bt-fee" type="number" class="field" value="0.1" min="0" max="5" step="any" required />
+                            </div>
+                            <div>
+                                <label class="label" for="bt-slippage">Slippage %</label>
+                                <input id="bt-slippage" type="number" class="field" value="0.05" min="0" max="5" step="any" required />
+                            </div>
+                        </div>
+                        <button type="submit" id="bt-run" class="btn btn-primary w-full">Run backtest</button>
+                        <p class="text-xs text-tv-muted">Tip: validate a strategy on a date range different from the one you tuned it on to avoid overfitting.</p>
+                    </form>
+                    <div id="bt-result" class="mt-4"></div>
+                </section>
+            </div>
+        </aside>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/core/app-namespace.js" asp-append-version="true"></script>
+    <script src="~/js/core/api.js" asp-append-version="true"></script>
+    <script src="~/js/core/toast.js" asp-append-version="true"></script>
+    <script src="~/js/core/format.js" asp-append-version="true"></script>
+    <script src="~/js/chart/indicators.js" asp-append-version="true"></script>
+    <script src="~/js/chart/chart-core.js" asp-append-version="true"></script>
+    <script src="~/js/chart/realtime-feed.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/base-primitive.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/trendline.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/horizontal-line.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/fibonacci.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/rect-zone.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/position-box.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/measure.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/drawing-renderer.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/manual-drawings.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/drawing-tools.js" asp-append-version="true"></script>
+    <script src="~/js/chart/chart-controls.js" asp-append-version="true"></script>
+    <script src="~/js/analysis/analysis-panel.js" asp-append-version="true"></script>
+    <script src="~/js/backtest/backtest-panel.js" asp-append-version="true"></script>
+    <script src="~/js/core/app.js" asp-append-version="true"></script>
+}

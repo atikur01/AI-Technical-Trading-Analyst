@@ -1,0 +1,110 @@
+using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using TradingChartAnalyzer.Features.Analysis.Models;
+using TradingChartAnalyzer.Features.Indicators;
+using TradingChartAnalyzer.Features.MarketData;
+using TradingChartAnalyzer.Shared.Json;
+
+namespace TradingChartAnalyzer.Features.Analysis;
+
+public sealed class AnalysisService(
+    IBinanceMarketDataClient marketData,
+    IAiChatClient aiClient,
+    IMemoryCache cache,
+    IOptions<AiOptions> options,
+    ILogger<AnalysisService> logger)
+{
+    private const int CandlesPerTimeframe = 500;
+    private const int MinimumCandles = 60;
+
+    public async Task<AnalysisResult> AnalyzeAsync(string symbol, Timeframe timeframe, CancellationToken cancellationToken)
+    {
+        var snapshot = await BuildSnapshotAsync(symbol, timeframe, cancellationToken);
+        var lastCandleTime = snapshot.Timeframes.First(t => t.Timeframe == timeframe.ToInterval()).Candles[^1][0];
+        var cacheKey = $"analysis:{symbol}:{timeframe}:{lastCandleTime}";
+
+        if (cache.TryGetValue(cacheKey, out AnalysisResult? cached) && cached is not null)
+        {
+            return cached;
+        }
+
+        var userPrompt = AnalysisPromptBuilder.BuildUserPrompt(snapshot);
+        var raw = await RequestAnalysisAsync(userPrompt, cancellationToken);
+        var result = AnalysisResultValidator.Validate(raw, snapshot);
+
+        logger.LogInformation("Analysis for {Symbol} {Timeframe}: {Setups} setups, {Drawings} drawings, {Warnings} warnings",
+            symbol, timeframe, result.Setups.Count, result.Drawings.Count, result.Warnings.Count);
+
+        cache.Set(cacheKey, result, TimeSpan.FromMinutes(options.Value.CacheMinutes));
+        return result;
+    }
+
+    private async Task<MarketSnapshot> BuildSnapshotAsync(string symbol, Timeframe timeframe, CancellationToken cancellationToken)
+    {
+        var timeframes = new[] { timeframe, Timeframe.H1, Timeframe.H4, Timeframe.D1 }.Distinct().ToList();
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        var fetched = await Task.WhenAll(timeframes.Select(async tf =>
+        {
+            var candles = await marketData.GetKlinesAsync(symbol, tf, CandlesPerTimeframe, cancellationToken);
+            return (tf, Candles: (IReadOnlyList<Candle>)candles.Where(c => c.CloseTime < now).ToList());
+        }));
+
+        if (fetched.Any(f => f.Candles.Count < MinimumCandles))
+        {
+            throw new MarketDataUnavailableException("Not enough market data to analyze this symbol.");
+        }
+
+        return MarketSnapshotBuilder.Build(symbol, timeframe, fetched.ToDictionary(f => f.tf, f => f.Candles));
+    }
+
+    private async Task<AnalysisResult> RequestAnalysisAsync(string userPrompt, CancellationToken cancellationToken)
+    {
+        var prompt = userPrompt;
+
+        for (var attempt = 1; attempt <= 2; attempt++)
+        {
+            var text = await aiClient.CompleteJsonAsync(AnalysisPromptBuilder.SystemPrompt, prompt, cancellationToken);
+
+            if (TryParse(text, out var result))
+            {
+                return result;
+            }
+
+            logger.LogWarning("AI returned unparseable analysis on attempt {Attempt}", attempt);
+            prompt = AnalysisPromptBuilder.BuildRepairPrompt(userPrompt);
+        }
+
+        throw new AiResponseException("AI returned a response that could not be understood.");
+    }
+
+    private static bool TryParse(string text, out AnalysisResult result)
+    {
+        result = new AnalysisResult();
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        if (start < 0 || end <= start)
+        {
+            return false;
+        }
+
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<AnalysisResult>(text[start..(end + 1)], AppJson.Options);
+            if (parsed?.Analysis is null)
+            {
+                return false;
+            }
+
+            result = parsed;
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+}
+
+public sealed class AiResponseException(string message) : Exception(message);

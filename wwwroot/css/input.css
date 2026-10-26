@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded border border-tv-border bg-tv-panel px-3 py-1.5 text-sm font-medium text-tv-text transition hover:bg-tv-border disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply border-tv-accent bg-tv-accent text-white hover:bg-blue-600;
+  }
+
+  .btn-tf {
+    @apply rounded px-2.5 py-1 text-sm font-medium text-tv-muted transition hover:bg-tv-border hover:text-tv-text;
+  }
+
+  .btn-tf.is-active {
+    @apply bg-tv-border text-tv-accent;
+  }
+
+  .tool-btn {
+    @apply flex h-8 w-8 items-center justify-center rounded text-tv-muted transition hover:bg-tv-border hover:text-tv-text;
+  }
+
+  .tool-btn.is-active {
+    @apply bg-tv-accent/20 text-tv-accent;
+  }
+
+  .ctl-btn {
+    @apply flex h-7 min-w-[1.75rem] items-center justify-center rounded px-2 text-xs font-medium text-tv-muted transition hover:bg-tv-border hover:text-tv-text;
+  }
+
+  .ctl-btn.is-active {
+    @apply bg-tv-accent/20 text-tv-accent;
+  }
+
+  .tab {
+    @apply flex-1 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-tv-muted transition hover:text-tv-text;
+  }
+
+  .tab.is-active {
+    @apply border-tv-accent text-tv-text;
+  }
+
+  .field {
+    @apply w-full rounded border border-tv-border bg-tv-bg px-2.5 py-1.5 text-sm text-tv-text outline-none focus:border-tv-accent;
+  }
+
+  .label {
+    @apply mb-1 block text-xs font-medium uppercase tracking-wide text-tv-muted;
+  }
+
+  .card {
+    @apply rounded-lg border border-tv-border bg-tv-bg p-3;
+  }
+
+  .chip {
+    @apply inline-block rounded-full border border-tv-border bg-tv-panel px-2 py-0.5 text-xs text-tv-text;
+  }
+
+  .badge {
+    @apply inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase;
+  }
+
+  .badge-bullish,
+  .badge-long {
+    @apply bg-tv-up/20 text-tv-up;
+  }
+
+  .badge-bearish,
+  .badge-short {
+    @apply bg-tv-down/20 text-tv-down;
+  }
+
+  .badge-ranging,
+  .badge-neutral {
+    @apply bg-tv-muted/20 text-tv-muted;
+  }
+
+  .metric {
+    @apply rounded-lg border border-tv-border bg-tv-bg p-2.5;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded bg-tv-border;
+  }
+
+  .dropdown-menu {
+    @apply absolute left-0 top-full z-30 mt-1 hidden min-w-[11rem] rounded-lg border border-tv-border bg-tv-panel p-2 shadow-xl;
+  }
+
+  .dropdown-menu.is-open {
+    @apply block;
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+#chart-main,
+#chart-rsi,
+#chart-macd {
+  width: 100%;
+}
