@@ -13,6 +13,7 @@
             case 'horizontal': return new App.HorizontalLinePrimitive(drawing);
             case 'fibonacci': return new App.FibonacciPrimitive(drawing);
             case 'zone': return new App.ZonePrimitive(drawing);
+            case 'projection': return new App.ProjectionPrimitive(drawing);
             case 'position': return new App.PositionBoxPrimitive(drawing);
             default: return null;
         }
@@ -54,6 +55,9 @@
             });
 
             applyVisibility();
+
+            const projection = drawings.find(function (drawing) { return drawing.type === 'projection'; });
+            if (projection) App.chartCore.showFutureBars(projection.candles.length);
         },
 
         clear: function () {

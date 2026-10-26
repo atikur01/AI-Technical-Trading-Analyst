@@ -4,8 +4,8 @@
     var timeframes = new[] { "1m", "5m", "15m", "1h", "4h", "1d", "1w", "1M" };
     var indicators = new (string Key, string Label, bool Checked)[]
     {
-        ("ema20", "EMA 20", true),
-        ("ema50", "EMA 50", true),
+        ("ema20", "EMA 20", false),
+        ("ema50", "EMA 50", false),
         ("ema200", "EMA 200", false),
         ("bollinger", "Bollinger Bands", false),
         ("vwap", "VWAP", false),
@@ -228,6 +228,7 @@
     <script src="~/js/drawings/primitives/horizontal-line.js" asp-append-version="true"></script>
     <script src="~/js/drawings/primitives/fibonacci.js" asp-append-version="true"></script>
     <script src="~/js/drawings/primitives/rect-zone.js" asp-append-version="true"></script>
+    <script src="~/js/drawings/primitives/projection.js" asp-append-version="true"></script>
     <script src="~/js/drawings/primitives/position-box.js" asp-append-version="true"></script>
     <script src="~/js/drawings/primitives/measure.js" asp-append-version="true"></script>
     <script src="~/js/drawings/drawing-renderer.js" asp-append-version="true"></script>

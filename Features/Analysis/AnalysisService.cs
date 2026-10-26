@@ -42,7 +42,9 @@ public sealed class AnalysisService(
 
     private async Task<MarketSnapshot> BuildSnapshotAsync(string symbol, Timeframe timeframe, CancellationToken cancellationToken)
     {
-        var timeframes = new[] { timeframe, Timeframe.H1, Timeframe.H4, Timeframe.D1 }.Distinct().ToList();
+        var timeframes = (timeframe.IsMacro()
+            ? new[] { timeframe, Timeframe.D1, Timeframe.W1, Timeframe.MN1 }
+            : new[] { timeframe, Timeframe.H1, Timeframe.H4, Timeframe.D1 }).Distinct().ToList();
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         var fetched = await Task.WhenAll(timeframes.Select(async tf =>

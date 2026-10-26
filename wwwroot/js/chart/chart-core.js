@@ -413,6 +413,13 @@
             chart.timeScale().fitContent();
         },
 
+        showFutureBars: function (count) {
+            const range = chart.timeScale().getVisibleLogicalRange();
+            if (!range) return;
+            const needed = App.state.candles.length - 1 + count + 2;
+            if (range.to < needed) chart.timeScale().setVisibleLogicalRange({ from: range.from, to: needed });
+        },
+
         scrollToLatest: function () {
             chart.timeScale().scrollToRealTime();
         },

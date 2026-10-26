@@ -9,6 +9,7 @@ namespace TradingChartAnalyzer.Features.Analysis.Models;
 [JsonDerivedType(typeof(ZoneDrawing), "zone")]
 [JsonDerivedType(typeof(PositionDrawing), "position")]
 [JsonDerivedType(typeof(MarkerDrawing), "marker")]
+[JsonDerivedType(typeof(ProjectionDrawing), "projection")]
 public abstract class Drawing
 {
     public string? SetupId { get; set; }
@@ -63,4 +64,18 @@ public sealed class MarkerDrawing : Drawing
     public string Position { get; set; } = "above";
     public string Shape { get; set; } = "circle";
     public string Text { get; set; } = string.Empty;
+}
+
+public sealed class ProjectedCandle
+{
+    public decimal Open { get; set; }
+    public decimal High { get; set; }
+    public decimal Low { get; set; }
+    public decimal Close { get; set; }
+}
+
+public sealed class ProjectionDrawing : Drawing
+{
+    public List<ProjectedCandle> Candles { get; set; } = [];
+    public string Color { get; set; } = "#2962ff";
 }

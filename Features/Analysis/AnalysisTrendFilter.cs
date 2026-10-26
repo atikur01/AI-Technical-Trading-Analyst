@@ -11,6 +11,11 @@ public static class AnalysisTrendFilter
 
     public static string? AllowedDirection(MarketSnapshot snapshot)
     {
+        if (TimeframeExtensions.TryParse(snapshot.PrimaryTimeframe, out var primary) && primary.IsMacro())
+        {
+            return null;
+        }
+
         var trend = snapshot.Timeframes.FirstOrDefault(t => t.Timeframe == TrendTimeframe.ToInterval());
         if (trend is null || trend.Candles.Count == 0 || trend.Indicators.Ema200 <= 0)
         {

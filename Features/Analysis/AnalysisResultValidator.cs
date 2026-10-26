@@ -11,6 +11,7 @@ public static partial class AnalysisResultValidator
     private const int MaxLabelLength = 60;
     private const decimal MinRiskReward = 2m;
     private const decimal RangeMargin = 0.2m;
+    private const int MaxProjectedCandles = 24;
 
     private static readonly string[] Trends = ["bullish", "bearish", "ranging"];
     private static readonly string[] Biases = ["long", "short", "neutral"];
@@ -207,6 +208,21 @@ public static partial class AnalysisResultValidator
                 position.StopLoss = setup.StopLoss;
                 position.TakeProfit = setup.TakeProfits[0];
                 return position;
+
+            case ProjectionDrawing projection:
+                projection.Color = NormalizeColor(projection.Color, "#2962ff");
+                projection.Candles = (projection.Candles ?? [])
+                    .Where(c => new[] { c.Open, c.High, c.Low, c.Close }.All(p => p > 0 && priceOk(p)))
+                    .Take(MaxProjectedCandles)
+                    .Select(c => new ProjectedCandle
+                    {
+                        Open = c.Open,
+                        Close = c.Close,
+                        High = Math.Max(c.High, Math.Max(c.Open, c.Close)),
+                        Low = Math.Min(c.Low, Math.Min(c.Open, c.Close))
+                    })
+                    .ToList();
+                return projection.Candles.Count > 0 ? projection : null;
 
             case MarkerDrawing marker:
                 marker.Position = marker.Position == "below" ? "below" : "above";

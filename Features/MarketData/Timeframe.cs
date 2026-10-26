@@ -28,6 +28,8 @@ public static class TimeframeExtensions
 
     public static string ToInterval(this Timeframe timeframe) => Map[timeframe].Interval;
 
+    public static bool IsMacro(this Timeframe timeframe) => timeframe >= Timeframe.W1;
+
     public static long ToMilliseconds(this Timeframe timeframe) => Map[timeframe].Milliseconds;
 
     public static bool TryParse(string? interval, out Timeframe timeframe)
