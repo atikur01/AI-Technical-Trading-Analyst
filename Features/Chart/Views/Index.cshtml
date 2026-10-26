@@ -53,8 +53,9 @@
         </div>
 
         <div class="ml-auto flex shrink-0 items-center gap-2">
-            <button type="button" id="analyze-button" class="btn btn-primary" title="Analyze (A)">Analyze with AI</button>
-            <button type="button" id="panel-toggle" class="btn" title="Toggle panel (Esc)" aria-label="Toggle panel">Panel</button>
+            <button type="button" id="panel-toggle" class="btn" title="Toggle panel (Esc)" aria-label="Toggle panel">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M15 4v16" /></svg>
+            </button>
         </div>
     </header>
 
@@ -135,7 +136,7 @@
                 <section id="tab-analysis" class="space-y-3 p-3">
                     <div id="drawing-controls" class="hidden items-center gap-2">
                         <button type="button" id="drawings-toggle" class="btn flex-1">Hide drawings</button>
-                        <button type="button" id="drawings-clear" class="btn flex-1">Clear</button>
+                        <button type="button" id="drawings-clear" class="btn flex-1">Clear analysis</button>
                     </div>
                     <label id="keep-drawings-wrap" class="hidden cursor-pointer items-center gap-2 text-xs text-tv-muted">
                         <input type="checkbox" id="keep-drawings" class="accent-tv-accent" /> Keep drawings when timeframe changes
@@ -147,9 +148,9 @@
                             </div>
                             <div class="space-y-1">
                                 <h2 class="text-base font-semibold text-tv-text">AI chart analysis</h2>
-                                <p class="text-sm text-tv-muted">Get a top-down market read, trade setups and chart drawings for the current symbol and timeframe.</p>
+                                <p class="text-sm text-tv-muted">For the current symbol and timeframe.</p>
                             </div>
-                            <button type="button" id="analysis-start" class="btn btn-primary w-full max-w-xs py-2">Analyze with AI</button>
+                            <button type="button" id="analysis-start" class="btn btn-primary w-full max-w-xs py-2">Run analysis</button>
                             <ul class="w-full space-y-2 text-left text-xs text-tv-muted">
                                 <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Trend and structure across timeframes</li>
                                 <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Entry, stop loss and take profit setups</li>

@@ -106,12 +106,15 @@
 
     function syncControls() {
         const hasDrawings = App.drawingRenderer.hasDrawings();
-        $('#drawing-controls').toggleClass('hidden', !hasDrawings).toggleClass('flex', hasDrawings);
+        const hasAnalysis = !!App.state.analysis;
+        $('#drawing-controls').toggleClass('hidden', !hasAnalysis && !hasDrawings).toggleClass('flex', hasAnalysis || hasDrawings);
+        $('#drawings-toggle').toggleClass('hidden', !hasDrawings);
         $('#keep-drawings-wrap').toggleClass('hidden', !hasDrawings).toggleClass('flex', hasDrawings);
         $('#drawings-toggle').text(App.drawingRenderer.isHidden() ? 'Show drawings' : 'Hide drawings');
     }
 
     let initialResultHtml = '';
+    let running = false;
 
     App.analysisPanel = {
         reset: function () {
@@ -124,8 +127,6 @@
 
         init: function () {
             initialResultHtml = $('#analysis-result').html();
-            $('#analyze-button').on('click', App.analysisPanel.run);
-
             $('#analysis-result')
                 .on('click', '.setup-card', function () {
                     selectSetup($(this).data('setup-id'));
@@ -139,18 +140,17 @@
 
             $('#drawings-clear').on('click', function () {
                 App.drawingRenderer.clear();
-                syncControls();
+                App.analysisPanel.reset();
             });
 
             $(document).on('drawings:changed', syncControls);
         },
 
         run: function () {
-            const $button = $('#analyze-button');
-            if ($button.prop('disabled')) return;
+            if (running) return;
 
+            running = true;
             App.panel.open('analysis');
-            $button.prop('disabled', true).text('Analyzing…');
             $('#analysis-result').html(skeleton());
 
             return App.api.post('/api/analysis', { symbol: App.state.symbol, timeframe: App.state.timeframe })
@@ -168,7 +168,7 @@
                     App.toast.show(error.message, 'error');
                 })
                 .always(function () {
-                    $button.prop('disabled', false).text('Analyze with AI');
+                    running = false;
                 });
         }
     };
