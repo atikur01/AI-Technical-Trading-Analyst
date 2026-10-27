@@ -32,12 +32,21 @@ jobs:
       - name: Install Tailwind
         run: npm ci
 
+      - name: Build CSS
+        run: npx tailwindcss -i wwwroot/css/input.css -o wwwroot/css/site.css --minify
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Publish
         run: dotnet publish TradingChartAnalyzer.csproj -c Release -o ${{ env.PUBLISH_DIR }}
+
+      - name: Verify CSS was published
+        shell: pwsh
+        run: |
+          $css = Get-ChildItem -Path "$env:PUBLISH_DIR/wwwroot" -Recurse -Filter "site*.css" -ErrorAction SilentlyContinue
+          if (-not $css) { throw "site.css is missing from the publish output." }
 
       - name: Write runtime secrets
         shell: pwsh
