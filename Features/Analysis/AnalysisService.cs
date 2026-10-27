@@ -9,7 +9,7 @@ using TradingChartAnalyzer.Shared.Json;
 namespace TradingChartAnalyzer.Features.Analysis;
 
 public sealed class AnalysisService(
-    IBinanceMarketDataClient marketData,
+    IMarketDataService marketData,
     IAiChatClient aiClient,
     IMemoryCache cache,
     IOptions<AiOptions> options,

@@ -12,6 +12,11 @@ public static class MarketDataServiceCollectionExtensions
             .Validate(o => Uri.IsWellFormedUriString(o.RestBaseUrl, UriKind.Absolute), "Binance:RestBaseUrl must be an absolute URL.")
             .ValidateOnStart();
 
+        services.AddOptions<TwelveDataOptions>()
+            .Bind(configuration.GetSection(TwelveDataOptions.SectionName))
+            .Validate(o => Uri.IsWellFormedUriString(o.RestBaseUrl, UriKind.Absolute), "TwelveData:RestBaseUrl must be an absolute URL.")
+            .ValidateOnStart();
+
         services.AddMemoryCache();
 
         services.AddHttpClient<IBinanceMarketDataClient, BinanceMarketDataClient>((provider, client) =>
@@ -19,6 +24,15 @@ public static class MarketDataServiceCollectionExtensions
             var options = provider.GetRequiredService<IOptions<BinanceOptions>>().Value;
             client.BaseAddress = new Uri(options.RestBaseUrl);
         }).AddStandardResilienceHandler();
+
+        services.AddHttpClient<ITwelveDataMarketDataClient, TwelveDataMarketDataClient>((provider, client) =>
+        {
+            var options = provider.GetRequiredService<IOptions<TwelveDataOptions>>().Value;
+            client.BaseAddress = new Uri(options.RestBaseUrl);
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"apikey {options.ApiKey}");
+        }).AddStandardResilienceHandler();
+
+        services.AddTransient<IMarketDataService, MarketDataService>();
 
         services.AddHealthChecks().AddCheck<BinanceHealthCheck>("binance");
 

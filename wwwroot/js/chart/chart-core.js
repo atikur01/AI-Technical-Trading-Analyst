@@ -337,6 +337,8 @@
                 });
         },
 
+        toCandle: toCandle,
+
         applyRealtime: function (candle) {
             const candles = App.state.candles;
             const last = candles[candles.length - 1];

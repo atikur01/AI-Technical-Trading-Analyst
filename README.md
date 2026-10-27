@@ -24,6 +24,7 @@ ASP.NET Core MVC (.NET 9) app that shows a live Binance chart, asks an AI model 
 
 ## Configuration (`appsettings.json`)
 
+- `TwelveData`: forex and stocks come from [Twelve Data](https://twelvedata.com). Set `TwelveData__ApiKey` in `.env` (free key). `ForexPairs` and `Stocks` are the symbols offered in the picker; `PollSeconds` is how often the live candle refreshes (the free tier allows 8 requests/min, and each analysis uses 4).
 - `Binance`: `RestBaseUrl` (use `https://data-api.binance.vision` if `api.binance.com` is blocked), `WsBaseUrl`, `DefaultSymbol`.
 - `Ai`: `BaseUrl` (Responses API endpoint), `Model`, `Temperature`, `MaxTokens` (reasoning tokens count against it), `TimeoutSeconds`.
 

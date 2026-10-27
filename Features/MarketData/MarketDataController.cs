@@ -5,7 +5,7 @@ namespace TradingChartAnalyzer.Features.MarketData;
 
 [ApiController]
 [Route("api/market")]
-public sealed class MarketDataController(IBinanceMarketDataClient client, IOptions<BinanceOptions> options) : ControllerBase
+public sealed class MarketDataController(IMarketDataService client, IOptions<BinanceOptions> options) : ControllerBase
 {
     [HttpGet("config")]
     public IActionResult GetConfig() => Ok(new
@@ -16,7 +16,11 @@ public sealed class MarketDataController(IBinanceMarketDataClient client, IOptio
 
     [HttpGet("symbols")]
     public async Task<IActionResult> GetSymbols(CancellationToken cancellationToken) =>
-        Ok(await client.GetSymbolsAsync(cancellationToken));
+        Ok((await client.GetSymbolsAsync(cancellationToken)).Select(s => new
+        {
+            symbol = s.Symbol,
+            assetClass = s.AssetClass.ToString().ToLowerInvariant()
+        }));
 
     [HttpGet("klines")]
     public async Task<IActionResult> GetKlines(

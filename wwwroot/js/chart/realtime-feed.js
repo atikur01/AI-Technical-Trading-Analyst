@@ -40,11 +40,25 @@
         };
     }
 
+    function poll(id, symbol, interval) {
+        timer = setTimeout(function () {
+            App.api.get('/api/market/klines', { symbol: symbol, interval: interval, limit: 2 })
+                .done(function (rows) {
+                    if (id !== token) return;
+                    rows.map(App.chartCore.toCandle).forEach(App.chartCore.applyRealtime);
+                })
+                .always(function () {
+                    if (id === token) poll(id, symbol, interval);
+                });
+        }, App.state.pollSeconds * 1000);
+    }
+
     App.realtimeFeed = {
         connect: function (symbol, interval) {
             App.realtimeFeed.disconnect();
             attempt = 0;
-            open(token, symbol, interval);
+            if (/USDT$/.test(symbol)) open(token, symbol, interval);
+            else poll(token, symbol, interval);
         },
         disconnect: function () {
             token++;

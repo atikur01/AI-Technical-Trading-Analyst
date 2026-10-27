@@ -15,7 +15,7 @@
     };
 }
 
-<div id="app" class="flex h-full w-full min-w-0 flex-col overflow-hidden" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl">
+<div id="app" class="flex h-full w-full min-w-0 flex-col overflow-hidden" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl" data-poll-seconds="@Model.PollSeconds">
     <header class="flex flex-wrap items-center gap-2 border-b border-tv-border bg-tv-panel px-3 py-2">
         <div class="relative mr-2 flex items-center gap-2">
             <button type="button" id="symbol-toggle" class="btn text-base font-bold tracking-tight" aria-haspopup="true" title="Change symbol (/)">
@@ -23,7 +23,13 @@
                 <span id="symbol-label">@Model.Symbol</span>
             </button>
             <div id="symbol-menu" class="dropdown-menu w-64">
-                <input id="symbol-search" type="text" class="field" placeholder="Search coin, e.g. ETH" autocomplete="off" spellcheck="false" aria-label="Search symbol" />
+                <input id="symbol-search" type="text" class="field" placeholder="Search symbol, e.g. BTC, EUR, AAPL" autocomplete="off" spellcheck="false" aria-label="Search symbol" />
+                <div id="symbol-tabs" class="mt-2 flex" role="tablist" aria-label="Asset class">
+                    <button type="button" role="tab" class="tab is-active" data-asset="all">All</button>
+                    <button type="button" role="tab" class="tab" data-asset="crypto">Crypto</button>
+                    <button type="button" role="tab" class="tab" data-asset="forex">Forex</button>
+                    <button type="button" role="tab" class="tab" data-asset="stock">Stocks</button>
+                </div>
                 <ul id="symbol-list" class="mt-2 max-h-72 overflow-y-auto" role="listbox"></ul>
             </div>
             <span id="last-price" class="text-sm font-semibold text-tv-muted">--</span>

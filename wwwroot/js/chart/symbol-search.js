@@ -3,29 +3,36 @@
 
     let symbols = [];
     let loaded = null;
+    let assetFilter = 'all';
 
     function esc(text) {
         return $('<div>').text(text).html();
     }
 
-    function display(symbol) {
-        return symbol.replace(/USDT$/, '') + '<span class="text-tv-muted">/USDT</span>';
+    function display(item) {
+        if (item.assetClass === 'crypto') {
+            return esc(item.symbol.replace(/USDT$/, '')) + '<span class="text-tv-muted">/USDT</span>';
+        }
+        return esc(item.symbol);
     }
 
     function render() {
         const query = $('#symbol-search').val().trim().toUpperCase();
-        const matches = symbols.filter(function (s) { return s.indexOf(query) !== -1; });
+        const matches = symbols.filter(function (s) {
+            return (assetFilter === 'all' || s.assetClass === assetFilter) && s.symbol.indexOf(query) !== -1;
+        });
         matches.sort(function (a, b) {
-            return Number(b.indexOf(query) === 0) - Number(a.indexOf(query) === 0);
+            return Number(b.symbol.indexOf(query) === 0) - Number(a.symbol.indexOf(query) === 0);
         });
 
-        const html = matches.slice(0, MAX_RESULTS).map(function (symbol, index) {
-            const active = symbol === App.state.symbol ? ' text-tv-accent' : '';
-            return '<li role="option" data-symbol="' + esc(symbol) + '" class="symbol-item cursor-pointer rounded px-2 py-1.5 text-sm hover:bg-tv-border' +
-                (index === 0 ? ' bg-tv-border' : '') + active + '">' + display(symbol) + '</li>';
+        const html = matches.slice(0, MAX_RESULTS).map(function (item, index) {
+            const active = item.symbol === App.state.symbol ? ' text-tv-accent' : '';
+            return '<li role="option" data-symbol="' + esc(item.symbol) + '" class="symbol-item flex cursor-pointer items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-tv-border' +
+                (index === 0 ? ' bg-tv-border' : '') + active + '"><span>' + display(item) + '</span><span class="text-xs text-tv-muted">' +
+                esc(item.assetClass) + '</span></li>';
         }).join('');
 
-        $('#symbol-list').html(html || '<li class="px-2 py-1.5 text-sm text-tv-muted">No matching coin.</li>');
+        $('#symbol-list').html(html || '<li class="px-2 py-1.5 text-sm text-tv-muted">No matching symbol.</li>');
     }
 
     function loadSymbols() {
@@ -86,6 +93,14 @@
 
             $('#symbol-menu').on('click', function (event) { event.stopPropagation(); });
             $(document).on('click', close);
+
+            $('#symbol-tabs').on('click', '.tab', function () {
+                assetFilter = $(this).data('asset');
+                $('#symbol-tabs .tab').removeClass('is-active');
+                $(this).addClass('is-active');
+                render();
+                $('#symbol-search').trigger('focus');
+            });
 
             $('#symbol-search').on('input', render).on('keydown', function (event) {
                 if (event.key === 'ArrowDown') moveHighlight(1);
