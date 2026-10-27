@@ -1,16 +1,16 @@
 (function (App) {
     const LEVEL_COLORS = {
         0: '#787b86',
-        0.236: '#ef5350',
+        0.236: '#f6465d',
         0.382: '#ff9800',
         0.5: '#4caf50',
-        0.618: '#26a69a',
+        0.618: '#22c997',
         0.786: '#00bcd4',
         1: '#787b86'
     };
 
     function levelColor(ratio) {
-        return LEVEL_COLORS[ratio] || (ratio > 1 ? '#ab47bc' : '#2962ff');
+        return LEVEL_COLORS[ratio] || (ratio > 1 ? '#ab47bc' : '#4f7cff');
     }
 
     class FibonacciPrimitive extends App.BasePrimitive {
@@ -64,7 +64,7 @@
             }
 
             if (d.label) {
-                this.drawLabel(ctx, d.label, left + 4, (levels[0] ? levels[0].y : 20) - 12, '#2962ff', 'left');
+                this.drawLabel(ctx, d.label, left + 4, (levels[0] ? levels[0].y : 20) - 12, '#4f7cff', 'left');
             }
         }
     }

@@ -7,7 +7,7 @@
             if (!a || !b) return;
 
             const up = d.to.price >= d.from.price;
-            const color = up ? '#26a69a' : '#ef5350';
+            const color = up ? '#22c997' : '#f6465d';
             const diff = d.to.price - d.from.price;
             const percent = d.from.price ? (diff / d.from.price) * 100 : 0;
             const step = App.timeframeStep();

@@ -100,7 +100,7 @@
         drawAnchors(ctx) {
             ctx.save();
             ctx.fillStyle = '#ffffff';
-            ctx.strokeStyle = '#2962ff';
+            ctx.strokeStyle = '#4f7cff';
             ctx.lineWidth = 2;
             this.anchors().forEach(function (anchor) {
                 ctx.beginPath();

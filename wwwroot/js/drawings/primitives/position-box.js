@@ -1,7 +1,7 @@
 (function (App) {
     const BOX_BARS = 30;
-    const UP = '#26a69a';
-    const DOWN = '#ef5350';
+    const UP = '#22c997';
+    const DOWN = '#f6465d';
 
     class PositionBoxPrimitive extends App.BasePrimitive {
         draw(ctx) {
@@ -33,7 +33,7 @@
 
             this.drawLabel(ctx, 'TP ' + App.format.price(d.takeProfit), x1 + 4, targetY + (targetY < entryY ? 11 : -11), UP, 'left');
             this.drawLabel(ctx, 'SL ' + App.format.price(d.stopLoss), x1 + 4, stopY + (stopY < entryY ? 11 : -11), DOWN, 'left');
-            this.drawLabel(ctx, 'Entry ' + App.format.price(d.entry) + '  RR ' + rr, x1 + 4, entryY, '#2962ff', 'left');
+            this.drawLabel(ctx, 'Entry ' + App.format.price(d.entry) + '  RR ' + rr, x1 + 4, entryY, '#4f7cff', 'left');
         }
     }
 

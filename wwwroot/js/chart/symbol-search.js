@@ -25,12 +25,12 @@
 
         const html = matches.slice(0, MAX_RESULTS).map(function (item, index) {
             const active = item.symbol === App.state.symbol ? ' text-tv-accent' : '';
-            return '<li role="option" data-symbol="' + esc(item.symbol) + '" class="symbol-item flex cursor-pointer items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-tv-border' +
-                (index === 0 ? ' bg-tv-border' : '') + active + '"><span>' + display(item) + '</span><span class="text-xs text-tv-muted">' +
+            return '<li role="option" data-symbol="' + esc(item.symbol) + '" class="symbol-item flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-sm font-semibold hover:bg-white/5' +
+                (index === 0 ? ' is-highlighted' : '') + active + '"><span>' + display(item) + '</span><span class="rounded bg-tv-bg px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-tv-muted">' +
                 esc(item.assetClass) + '</span></li>';
         }).join('');
 
-        $('#symbol-list').html(html || '<li class="px-2 py-1.5 text-sm text-tv-muted">No matching symbol.</li>');
+        $('#symbol-list').html(html || '<li class="px-2 py-6 text-center text-sm text-tv-muted">No matching symbol.</li>');
     }
 
     function loadSymbols() {
@@ -70,9 +70,9 @@
     function moveHighlight(step) {
         const $items = $('#symbol-list .symbol-item');
         if (!$items.length) return;
-        const current = $items.index($items.filter('.bg-tv-border'));
+        const current = $items.index($items.filter('.is-highlighted'));
         const next = (current + step + $items.length) % $items.length;
-        $items.removeClass('bg-tv-border').eq(next).addClass('bg-tv-border')[0].scrollIntoView({ block: 'nearest' });
+        $items.removeClass('is-highlighted').eq(next).addClass('is-highlighted')[0].scrollIntoView({ block: 'nearest' });
     }
 
     App.symbolSearch = {
@@ -104,7 +104,7 @@
             $('#symbol-search').on('input', render).on('keydown', function (event) {
                 if (event.key === 'ArrowDown') moveHighlight(1);
                 else if (event.key === 'ArrowUp') moveHighlight(-1);
-                else if (event.key === 'Enter') select($('#symbol-list .symbol-item.bg-tv-border').attr('data-symbol'));
+                else if (event.key === 'Enter') select($('#symbol-list .symbol-item.is-highlighted').attr('data-symbol'));
                 else if (event.key === 'Escape') close();
                 else return;
                 event.preventDefault();

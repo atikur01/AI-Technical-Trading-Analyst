@@ -1,16 +1,16 @@
 (function ($, App) {
     const theme = {
-        background: '#131722',
-        text: '#d1d4dc',
-        grid: '#1f2330',
-        border: '#2a2e39',
-        up: '#26a69a',
-        down: '#ef5350'
+        background: '#0b0e14',
+        text: '#9aa3b5',
+        grid: '#141a24',
+        border: '#1f2633',
+        up: '#22c997',
+        down: '#f6465d'
     };
 
     const overlayStyles = {
         ema20: { color: '#f7a600', title: 'EMA 20' },
-        ema50: { color: '#2962ff', title: 'EMA 50' },
+        ema50: { color: '#4f7cff', title: 'EMA 50' },
         ema200: { color: '#ab47bc', title: 'EMA 200' },
         vwap: { color: '#00bcd4', title: 'VWAP' }
     };
@@ -136,7 +136,7 @@
     function ensureRsiDivergence() {
         if (rsiDivPane) return rsiDivPane;
         const paneChart = createPane('chart-rsidiv');
-        const series = paneChart.addLineSeries({ color: '#2962ff', lineWidth: 2, priceLineVisible: false, title: 'RSI Div' });
+        const series = paneChart.addLineSeries({ color: '#4f7cff', lineWidth: 2, priceLineVisible: false, title: 'RSI Div' });
         addRsiLevels(series);
         rsiDivPane = { chart: paneChart, series: series, segments: [] };
         wireSync(paneChart);
@@ -179,7 +179,7 @@
         macdPane = {
             chart: paneChart,
             histogram: paneChart.addHistogramSeries({ priceLineVisible: false, lastValueVisible: false }),
-            line: paneChart.addLineSeries({ color: '#2962ff', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'MACD' }),
+            line: paneChart.addLineSeries({ color: '#4f7cff', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'MACD' }),
             signal: paneChart.addLineSeries({ color: '#f7a600', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'Signal' })
         };
         wireSync(paneChart);

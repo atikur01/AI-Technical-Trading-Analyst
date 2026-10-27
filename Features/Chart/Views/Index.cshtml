@@ -17,15 +17,23 @@
 }
 
 <div id="app" class="flex h-full w-full min-w-0 flex-col overflow-hidden" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl" data-poll-seconds="@Model.PollSeconds">
-    <header class="flex flex-wrap items-center gap-2 border-b border-tv-border bg-tv-panel px-3 py-2">
-        <div class="relative mr-2 flex items-center gap-2">
-            <button type="button" id="symbol-toggle" class="btn text-base font-bold tracking-tight" aria-haspopup="true" title="Change symbol (/)">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4-4" /></svg>
+    <header class="relative z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-tv-border bg-tv-panel/90 px-3 py-2 backdrop-blur-xl">
+        <div class="mr-1 flex items-center gap-2" aria-label="AI Trading Chart Analyzer">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-tv-accent to-tv-violet shadow-glow">
+                <svg viewBox="0 0 24 24" class="h-[18px] w-[18px] text-white" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9" /><path d="M15 6h5v5" /></svg>
+            </span>
+            <span class="hidden text-sm font-bold leading-none tracking-tight lg:block">Chart<span class="bg-gradient-to-r from-tv-accent to-tv-violet bg-clip-text text-transparent">AI</span></span>
+        </div>
+
+        <div class="relative flex items-center gap-3">
+            <button type="button" id="symbol-toggle" class="btn !bg-tv-bg text-sm font-bold tracking-tight" aria-haspopup="true" title="Change symbol (/)">
+                <svg viewBox="0 0 24 24" class="h-4 w-4 text-tv-muted" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4-4" /></svg>
                 <span id="symbol-label">@Model.Symbol</span>
+                <span class="kbd">/</span>
             </button>
-            <div id="symbol-menu" class="dropdown-menu w-64">
-                <input id="symbol-search" type="text" class="field" placeholder="Search symbol, e.g. BTC, EUR, AAPL" autocomplete="off" spellcheck="false" aria-label="Search symbol" />
-                <div id="symbol-tabs" class="mt-2 flex" role="tablist" aria-label="Asset class">
+            <div id="symbol-menu" class="dropdown-menu w-72">
+                <input id="symbol-search" type="text" class="field" placeholder="Search BTC, EURUSD, AAPL…" autocomplete="off" spellcheck="false" aria-label="Search symbol" />
+                <div id="symbol-tabs" class="mt-2 flex gap-1 rounded-lg bg-tv-bg p-1" role="tablist" aria-label="Asset class">
                     <button type="button" role="tab" class="tab is-active" data-asset="all">All</button>
                     <button type="button" role="tab" class="tab" data-asset="crypto">Crypto</button>
                     <button type="button" role="tab" class="tab" data-asset="forex">Forex</button>
@@ -33,10 +41,10 @@
                 </div>
                 <ul id="symbol-list" class="mt-2 max-h-72 overflow-y-auto" role="listbox"></ul>
             </div>
-            <span id="last-price" class="text-sm font-semibold text-tv-muted">--</span>
+            <span id="last-price" class="num text-lg font-semibold text-tv-muted">--</span>
         </div>
 
-        <nav class="flex items-center gap-0.5" aria-label="Timeframe">
+        <nav class="flex items-center gap-0.5 rounded-lg bg-tv-bg p-0.5" aria-label="Timeframe">
             @foreach (var timeframe in timeframes)
             {
                 <button type="button" class="btn-tf" data-timeframe="@timeframe">@timeframe</button>
@@ -44,11 +52,14 @@
         </nav>
 
         <div class="relative">
-            <button type="button" id="indicator-toggle" class="btn" aria-haspopup="true">Indicators</button>
-            <div id="indicator-menu" class="dropdown-menu">
+            <button type="button" id="indicator-toggle" class="btn" aria-haspopup="true">
+                <svg viewBox="0 0 24 24" class="h-4 w-4 text-tv-muted" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9" /></svg>
+                Indicators
+            </button>
+            <div id="indicator-menu" class="dropdown-menu w-56">
                 @foreach (var indicator in indicators)
                 {
-                    <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-tv-border">
+                    <label class="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition hover:bg-white/5">
                         <input type="checkbox" class="indicator-check accent-tv-accent" value="@indicator.Key" checked="@indicator.Checked" />
                         @indicator.Label
                     </label>
@@ -57,7 +68,12 @@
         </div>
 
         <div class="ml-auto flex shrink-0 items-center gap-2">
-            <button type="button" id="panel-toggle" class="btn" title="Toggle panel (Esc)" aria-label="Toggle panel">
+            <button type="button" id="analyze-btn" class="btn-ai" title="Analyze this chart with AI (A)">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z" /></svg>
+                <span id="analyze-label">Analyze with AI</span>
+                <span class="kbd hidden !border-white/25 !bg-white/15 !text-white sm:inline-flex">A</span>
+            </button>
+            <button type="button" id="panel-toggle" class="btn !px-2" title="Toggle panel (Esc)" aria-label="Toggle panel">
                 <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M15 4v16" /></svg>
             </button>
         </div>
@@ -67,8 +83,8 @@
         <main class="flex min-w-0 flex-1 flex-col">
             <div class="relative min-h-0 flex-1">
                 <div id="chart-main" class="h-full"></div>
-                <div id="chart-legend" class="pointer-events-none absolute left-3 top-2 z-10 flex flex-wrap gap-x-3 text-xs text-tv-muted"></div>
-                <div id="draw-toolbar" class="absolute left-2 top-10 z-10 flex flex-col gap-1 rounded-lg border border-tv-border bg-tv-panel/95 p-1 shadow-lg">
+                <div id="chart-legend" class="num pointer-events-none absolute left-14 top-2 z-10 flex flex-wrap gap-x-3 rounded-md bg-tv-bg/60 px-2 py-0.5 text-[11px] text-tv-muted backdrop-blur-sm"></div>
+                <div id="draw-toolbar" class="glass absolute left-2 top-2 z-10 flex flex-col gap-0.5 rounded-xl p-1">
                     <button type="button" class="tool-btn is-active" data-tool="cursor" title="Cursor (V)" aria-label="Cursor">
                         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 3l14 8-6 2-3 6z" /></svg>
                     </button>
@@ -90,7 +106,7 @@
                     <button type="button" class="tool-btn" data-tool="measure" title="Measure (M)" aria-label="Measure">
                         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17L17 3l4 4L7 21z" /><path d="M7 13l2 2M10 10l2 2M13 7l2 2" /></svg>
                     </button>
-                    <div class="my-0.5 h-px bg-tv-border"></div>
+                    <div class="mx-1 my-0.5 h-px bg-tv-border"></div>
                     <button type="button" id="tool-delete" class="tool-btn" title="Delete selected (Del)" aria-label="Delete selected">
                         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
                     </button>
@@ -99,10 +115,14 @@
                     </button>
                 </div>
                 <div id="chart-context-menu" class="context-menu" role="menu"></div>
-                <div id="chart-loading" class="absolute inset-0 z-20 flex items-center justify-center bg-tv-bg/70 text-sm text-tv-muted">Loading chart…</div>
-                <div id="chart-error" class="absolute inset-0 z-20 hidden flex-col items-center justify-center gap-3 bg-tv-bg text-sm text-tv-down">
-                    <span id="chart-error-text"></span>
-                    <button type="button" id="chart-retry" class="btn">Retry</button>
+                <div id="chart-loading" class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-tv-bg/70 text-sm text-tv-muted backdrop-blur-sm">
+                    <span class="h-7 w-7 animate-spin rounded-full border-2 border-tv-border border-t-tv-accent"></span>
+                    Loading market data…
+                </div>
+                <div id="chart-error" class="absolute inset-0 z-20 hidden flex-col items-center justify-center gap-3 bg-tv-bg px-6 text-center text-sm">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-full bg-tv-down/15 text-lg font-bold text-tv-down">!</span>
+                    <span id="chart-error-text" class="max-w-sm text-tv-muted"></span>
+                    <button type="button" id="chart-retry" class="btn btn-primary">Retry</button>
                 </div>
             </div>
             <div id="pane-rsi" class="hidden h-32 border-t border-tv-border">
@@ -114,14 +134,26 @@
             <div id="pane-macd" class="hidden h-32 border-t border-tv-border">
                 <div id="chart-macd" class="h-full"></div>
             </div>
-            <footer class="border-t border-tv-border bg-tv-panel px-3 py-1 text-center text-xs text-tv-muted">
-                This is not financial advice.
+            <footer class="flex items-center justify-between gap-3 border-t border-tv-border bg-tv-panel px-3 py-1 text-[11px] text-tv-muted">
+                <span class="flex items-center gap-1.5"><span class="live-dot"></span>Live market data</span>
+                <span class="hidden items-center gap-3 sm:flex">
+                    <span><span class="kbd">1</span>–<span class="kbd">8</span> timeframe</span>
+                    <span><span class="kbd">T</span> <span class="kbd">H</span> <span class="kbd">F</span> <span class="kbd">R</span> draw</span>
+                    <span><span class="kbd">A</span> analyze</span>
+                </span>
+                <span>Not financial advice</span>
             </footer>
         </main>
 
-        <aside id="side-panel" class="fixed inset-x-0 bottom-0 z-30 flex h-[65vh] translate-y-full flex-col border-t border-tv-border bg-tv-panel transition-transform md:static md:h-auto md:w-96 md:translate-y-0 md:border-l md:border-t-0">
-            <div class="flex justify-end border-b border-tv-border md:hidden">
-                <button type="button" id="panel-close" class="px-3 py-2 text-tv-muted hover:text-tv-text" aria-label="Close panel">✕</button>
+        <aside id="side-panel" class="fixed inset-x-0 bottom-0 z-30 flex h-[70vh] translate-y-full flex-col rounded-t-2xl border-t border-tv-border bg-tv-panel shadow-float transition-transform duration-300 md:static md:h-auto md:w-[26rem] md:translate-y-0 md:rounded-none md:border-l md:border-t-0 md:shadow-none">
+            <div class="flex items-center justify-between border-b border-tv-border px-4 py-2.5">
+                <div class="flex items-center gap-2 text-sm font-semibold">
+                    <span class="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-tv-accent to-tv-violet text-white">
+                        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z" /></svg>
+                    </span>
+                    AI Analyst
+                </div>
+                <button type="button" id="panel-close" class="tool-btn md:hidden" aria-label="Close panel">✕</button>
             </div>
             <div class="min-h-0 flex-1 overflow-y-auto">
                 <section id="tab-analysis" class="space-y-3 p-3">
@@ -133,24 +165,26 @@
                         <input type="checkbox" id="keep-drawings" class="accent-tv-accent" /> Keep drawings when timeframe changes
                     </label>
                     <div id="analysis-result">
-                        <div class="flex flex-col items-center gap-4 px-2 py-8 text-center">
-                            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-tv-accent/15 text-tv-accent">
-                                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16" /><path d="M8 15l3-4 3 2 5-6" /></svg>
+                        <div class="flex flex-col items-center gap-5 px-1 py-6 text-center">
+                            <div class="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-tv-accent/25 to-tv-violet/25 text-tv-accent shadow-glow">
+                                <svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16" /><path d="M8 15l3-4 3 2 5-6" /></svg>
                             </div>
-                            <div class="space-y-1">
-                                <h2 class="text-base font-semibold text-tv-text">AI chart analysis</h2>
-                                <p class="text-sm text-tv-muted">For the current symbol and timeframe.</p>
+                            <div class="space-y-1.5">
+                                <h2 class="text-lg font-bold tracking-tight">Your AI trading analyst</h2>
+                                <p class="text-sm text-tv-muted">Get a full read of this chart in seconds, drawn right where you trade.</p>
                             </div>
-                            <button type="button" id="analysis-start" class="btn btn-primary w-full max-w-xs py-2">Run analysis</button>
-                            <ul class="w-full space-y-2 text-left text-xs text-tv-muted">
-                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Trend and structure across timeframes</li>
-                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Entry, stop loss and take profit setups</li>
-                                <li class="flex items-center gap-2 rounded-lg border border-tv-border bg-tv-bg px-3 py-2"><span class="text-tv-accent">●</span> Drawn directly on the chart</li>
+                            <button type="button" id="analysis-start" class="btn-ai w-full max-w-xs !py-2.5 text-base">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z" /></svg>
+                                Run analysis <span class="kbd !border-white/25 !bg-white/15 !text-white">A</span>
+                            </button>
+                            <ul class="w-full space-y-2 text-left text-sm">
+                                <li class="flex items-center gap-3 rounded-xl border border-tv-border bg-tv-bg px-3 py-2.5"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-tv-accent/15 text-tv-accent">↗</span><span><span class="block font-semibold">Trend &amp; structure</span><span class="text-xs text-tv-muted">Multi-timeframe bias and key levels</span></span></li>
+                                <li class="flex items-center gap-3 rounded-xl border border-tv-border bg-tv-bg px-3 py-2.5"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-tv-up/15 text-tv-up">◎</span><span><span class="block font-semibold">Ready-to-trade setups</span><span class="text-xs text-tv-muted">Entry, stop loss and take profit with risk/reward</span></span></li>
+                                <li class="flex items-center gap-3 rounded-xl border border-tv-border bg-tv-bg px-3 py-2.5"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-tv-violet/15 text-tv-violet">✎</span><span><span class="block font-semibold">Drawn on the chart</span><span class="text-xs text-tv-muted">Zones and levels appear instantly</span></span></li>
                             </ul>
-                            <p class="text-xs text-tv-muted">Shortcut: press <span class="rounded border border-tv-border bg-tv-bg px-1.5 py-0.5 font-semibold text-tv-text">A</span></p>
                         </div>
                     </div>
-                </section>
+                </</section>
             </div>
         </aside>
     </div>

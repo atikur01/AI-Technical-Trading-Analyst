@@ -48,7 +48,7 @@
     function buildDrawing(kind, c) {
         switch (kind) {
             case 'trendline':
-                return { type: 'trendline', points: [copy(c), copy(c)], color: '#2962ff', extend: 'none' };
+                return { type: 'trendline', points: [copy(c), copy(c)], color: '#4f7cff', extend: 'none' };
             case 'fibonacci':
                 return { type: 'fibonacci', from: copy(c), to: copy(c), levels: FIB_LEVELS.slice() };
             default:

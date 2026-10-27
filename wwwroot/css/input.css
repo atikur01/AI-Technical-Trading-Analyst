@@ -2,25 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  ::selection {
+    background: rgba(79, 124, 255, 0.35);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2a3344 transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-tv-border;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-tv-accent/60;
+  }
+}
+
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded border border-tv-border bg-tv-panel px-3 py-1.5 text-sm font-medium text-tv-text transition hover:bg-tv-border disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-tv-border bg-tv-raised px-3 py-1.5 text-sm font-medium text-tv-text transition duration-150 hover:border-white/10 hover:bg-white/5 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .btn-primary {
-    @apply border-tv-accent bg-tv-accent text-white hover:bg-blue-600;
+    @apply border-transparent bg-tv-accent text-white hover:bg-blue-500;
+  }
+
+  .btn-ai {
+    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-lg border border-white/10 bg-gradient-to-r from-tv-accent to-tv-violet px-4 py-1.5 text-sm font-semibold text-white shadow-glow transition duration-150 hover:brightness-110 active:scale-[0.97] disabled:cursor-wait disabled:opacity-70;
+  }
+
+  .btn-ai.is-busy::after {
+    content: '';
+    @apply absolute inset-0 animate-shimmer;
+    background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+    background-size: 200% 100%;
   }
 
   .btn-tf {
-    @apply rounded px-2.5 py-1 text-sm font-medium text-tv-muted transition hover:bg-tv-border hover:text-tv-text;
+    @apply rounded-md px-2.5 py-1 text-xs font-semibold text-tv-muted transition duration-150 hover:text-tv-text;
   }
 
   .btn-tf.is-active {
-    @apply bg-tv-border text-tv-accent;
+    @apply bg-tv-accent/15 text-tv-accent;
   }
 
   .tool-btn {
-    @apply flex h-8 w-8 items-center justify-center rounded text-tv-muted transition hover:bg-tv-border hover:text-tv-text;
+    @apply flex h-8 w-8 items-center justify-center rounded-lg text-tv-muted transition duration-150 hover:bg-white/5 hover:text-tv-text active:scale-95;
   }
 
   .tool-btn.is-active {
@@ -28,7 +67,7 @@
   }
 
   .ctl-btn {
-    @apply flex h-7 min-w-[1.75rem] items-center justify-center rounded px-2 text-xs font-medium text-tv-muted transition hover:bg-tv-border hover:text-tv-text;
+    @apply flex h-7 min-w-[1.75rem] items-center justify-center rounded-md px-2 text-xs font-medium text-tv-muted transition hover:bg-white/5 hover:text-tv-text;
   }
 
   .ctl-btn.is-active {
@@ -36,46 +75,46 @@
   }
 
   .tab {
-    @apply flex-1 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-tv-muted transition hover:text-tv-text;
+    @apply flex-1 rounded-md px-3 py-1.5 text-xs font-semibold text-tv-muted transition hover:text-tv-text;
   }
 
   .tab.is-active {
-    @apply border-tv-accent text-tv-text;
+    @apply bg-tv-raised text-tv-text shadow-sm;
   }
 
   .field {
-    @apply w-full rounded border border-tv-border bg-tv-bg px-2.5 py-1.5 text-sm text-tv-text outline-none focus:border-tv-accent;
+    @apply w-full rounded-lg border border-tv-border bg-tv-bg px-3 py-2 text-sm text-tv-text outline-none transition placeholder:text-tv-muted/70 focus:border-tv-accent;
   }
 
   .label {
-    @apply mb-1 block text-xs font-medium uppercase tracking-wide text-tv-muted;
+    @apply mb-1 block text-[11px] font-semibold uppercase tracking-wider text-tv-muted;
   }
 
   .card {
-    @apply rounded-lg border border-tv-border bg-tv-bg p-3;
+    @apply animate-fade-up rounded-xl border border-tv-border bg-tv-raised/60 p-3.5;
   }
 
   .chip {
-    @apply inline-block rounded-full border border-tv-border bg-tv-panel px-2 py-0.5 text-xs text-tv-text;
+    @apply inline-block rounded-md border border-tv-border bg-tv-bg px-2 py-0.5 text-[11px] font-medium text-tv-muted;
   }
 
   .badge {
-    @apply inline-block rounded px-2 py-0.5 text-xs font-semibold uppercase;
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide;
   }
 
   .badge-bullish,
   .badge-long {
-    @apply bg-tv-up/20 text-tv-up;
+    @apply bg-tv-up/15 text-tv-up;
   }
 
   .badge-bearish,
   .badge-short {
-    @apply bg-tv-down/20 text-tv-down;
+    @apply bg-tv-down/15 text-tv-down;
   }
 
   .badge-ranging,
   .badge-neutral {
-    @apply bg-tv-muted/20 text-tv-muted;
+    @apply bg-tv-muted/15 text-tv-muted;
   }
 
   .metric {
@@ -83,7 +122,7 @@
   }
 
   .form-section {
-    @apply space-y-2 rounded-lg border border-tv-border bg-tv-bg/40 p-3;
+    @apply space-y-2 rounded-xl border border-tv-border bg-tv-bg/40 p-3;
   }
 
   .section-title {
@@ -112,27 +151,30 @@
   }
 
   .skeleton {
-    @apply animate-pulse rounded bg-tv-border;
+    @apply rounded-lg;
+    background: linear-gradient(100deg, #171c27 30%, #232b3a 50%, #171c27 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
   }
 
   .dropdown-menu {
-    @apply absolute left-0 top-full z-30 mt-1 hidden min-w-[11rem] rounded-lg border border-tv-border bg-tv-panel p-2 shadow-xl;
+    @apply absolute left-0 top-full z-30 mt-2 hidden min-w-[11rem] rounded-xl border border-tv-border bg-tv-panel/95 p-2 shadow-float backdrop-blur-xl;
   }
 
   .dropdown-menu.is-open {
-    @apply block;
+    @apply block animate-pop;
   }
 
   .context-menu {
-    @apply absolute z-30 hidden min-w-[13rem] rounded-lg border border-tv-border bg-tv-panel py-1 shadow-xl;
+    @apply absolute z-30 hidden min-w-[13rem] rounded-xl border border-tv-border bg-tv-panel/95 py-1 shadow-float backdrop-blur-xl;
   }
 
   .context-menu.is-open {
-    @apply block;
+    @apply block animate-pop;
   }
 
   .context-item {
-    @apply flex w-full items-center justify-between gap-6 px-3 py-1.5 text-left text-sm text-tv-text transition hover:bg-tv-border focus:bg-tv-border focus:outline-none;
+    @apply flex w-full items-center justify-between gap-6 px-3 py-1.5 text-left text-sm text-tv-text transition hover:bg-white/5 focus:bg-white/5 focus:outline-none;
   }
 
   .context-hint {
@@ -142,11 +184,55 @@
   .context-sep {
     @apply my-1 h-px bg-tv-border;
   }
+
+  .kbd {
+    @apply inline-flex min-w-[1.25rem] items-center justify-center rounded border border-tv-border bg-tv-bg px-1 font-mono text-[10px] font-semibold text-tv-muted;
+  }
+
+  .glass {
+    @apply border border-tv-border bg-tv-panel/85 shadow-float backdrop-blur-xl;
+  }
+
+  .live-dot {
+    @apply inline-block h-1.5 w-1.5 rounded-full bg-tv-up animate-pulse-dot;
+  }
+
+  .symbol-item.is-highlighted {
+    @apply bg-white/5;
+  }
+
+  .setup-card {
+    @apply cursor-pointer transition duration-150 hover:border-white/15 hover:bg-tv-raised;
+  }
+
+  .setup-card.is-selected {
+    @apply border-tv-accent/70 bg-tv-accent/5 shadow-glow;
+  }
+
+  .toast {
+    @apply pointer-events-auto flex animate-slide-in items-start gap-2.5 rounded-xl border border-tv-border bg-tv-panel/95 px-3.5 py-2.5 text-sm text-tv-text shadow-float backdrop-blur-xl;
+  }
+
+  .toast-icon {
+    @apply mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-tv-bg;
+  }
+
+  .num {
+    @apply font-mono tabular-nums;
+  }
 }
 
 html,
 body {
   height: 100%;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-image:
+    radial-gradient(60rem 30rem at 85% -10%, rgba(79, 124, 255, 0.07), transparent 60%),
+    radial-gradient(40rem 24rem at 0% 110%, rgba(139, 92, 246, 0.05), transparent 60%);
+  background-attachment: fixed;
 }
 
 .field {
@@ -154,7 +240,7 @@ body {
 }
 
 .field:focus {
-  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.22);
 }
 
 input[type='number'].field {
@@ -169,11 +255,33 @@ input[type='number'].field::-webkit-outer-spin-button {
 }
 
 input.field:invalid:not(:placeholder-shown):not(:focus) {
-  border-color: #ef5350;
+  border-color: #f6465d;
 }
 
 #chart-main,
 #chart-rsi,
 #chart-macd {
   width: 100%;
+}
+
+.confidence-ring {
+  --value: 0;
+  background: conic-gradient(var(--ring-color, #4f7cff) calc(var(--value) * 1%), #1f2633 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+}
+
+.scan-line {
+  background: linear-gradient(180deg, transparent, rgba(79, 124, 255, 0.35), transparent);
+  height: 40%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,5 +1,5 @@
 (function (App) {
-    const DEFAULT_COLOR = '#2962ff';
+    const DEFAULT_COLOR = '#4f7cff';
     const BODY_RATIO = 0.5;
 
     class ProjectionPrimitive extends App.BasePrimitive {

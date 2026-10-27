@@ -26,7 +26,7 @@
             time: drawing.time,
             position: drawing.position === 'below' ? 'belowBar' : 'aboveBar',
             shape: drawing.shape,
-            color: isUp ? '#26a69a' : isDown ? '#ef5350' : '#f7a600',
+            color: isUp ? '#22c997' : isDown ? '#f6465d' : '#f7a600',
             text: drawing.text || ''
         };
     }

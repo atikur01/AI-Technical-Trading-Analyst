@@ -1,10 +1,10 @@
 (function (App) {
     const KINDS = {
-        supply: { color: '#ef5350', name: 'Supply' },
-        demand: { color: '#26a69a', name: 'Demand' },
+        supply: { color: '#f6465d', name: 'Supply' },
+        demand: { color: '#22c997', name: 'Demand' },
         fvg: { color: '#7e57c2', name: 'FVG' },
         orderblock: { color: '#ff9800', name: 'Order Block' },
-        custom: { color: '#2962ff', name: '' }
+        custom: { color: '#4f7cff', name: '' }
     };
 
     class ZonePrimitive extends App.BasePrimitive {

@@ -165,7 +165,7 @@
                 line: toSeries(candles, line),
                 signal: toSeries(candles, signal),
                 histogram: toSeries(candles, histogram).map(function (point) {
-                    return { time: point.time, value: point.value, color: point.value >= 0 ? '#26a69a' : '#ef5350' };
+                    return { time: point.time, value: point.value, color: point.value >= 0 ? '#22c997' : '#f6465d' };
                 })
             };
         }
