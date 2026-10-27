@@ -21,7 +21,8 @@ public sealed class ApiExceptionHandler(IProblemDetailsService problemDetails, I
         var (status, title) = exception switch
         {
             MarketSymbolNotFoundException => (StatusCodes.Status404NotFound, exception.Message),
-            MarketDataUnavailableException => (StatusCodes.Status502BadGateway, exception.Message),
+            MarketDataRateLimitedException => (StatusCodes.Status429TooManyRequests, exception.Message),
+            MarketDataUnavailableException =>(StatusCodes.Status502BadGateway, exception.Message),
             TimeoutRejectedException or BrokenCircuitException => (StatusCodes.Status503ServiceUnavailable, ProviderUnavailable),
             AiUnavailableException => (StatusCodes.Status503ServiceUnavailable, exception.Message),
             AiResponseException => (StatusCodes.Status502BadGateway, exception.Message),

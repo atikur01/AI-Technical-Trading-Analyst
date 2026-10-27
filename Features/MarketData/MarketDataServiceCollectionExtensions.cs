@@ -15,8 +15,10 @@ public static class MarketDataServiceCollectionExtensions
         services.AddOptions<TwelveDataOptions>()
             .Bind(configuration.GetSection(TwelveDataOptions.SectionName))
             .Validate(o => Uri.IsWellFormedUriString(o.RestBaseUrl, UriKind.Absolute), "TwelveData:RestBaseUrl must be an absolute URL.")
+            .Validate(o => o.RequestsPerMinute > 0 && o.QueueLimit >= 0 && o.MaxQueueWaitSeconds > 0, "TwelveData rate limit settings must be positive.")
             .ValidateOnStart();
 
+        services.AddSingleton<TwelveDataRateLimiter>();
         services.AddMemoryCache();
 
         services.AddHttpClient<IBinanceMarketDataClient, BinanceMarketDataClient>((provider, client) =>

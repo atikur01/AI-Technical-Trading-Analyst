@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,7 @@ namespace TradingChartAnalyzer.Features.MarketData;
 public sealed class TwelveDataMarketDataClient(
     HttpClient httpClient,
     IMemoryCache cache,
+    TwelveDataRateLimiter rateLimiter,
     IOptions<TwelveDataOptions> options,
     ILogger<TwelveDataMarketDataClient> logger) : ITwelveDataMarketDataClient
 {
@@ -37,9 +39,17 @@ public sealed class TwelveDataMarketDataClient(
 
     private async Task<IReadOnlyList<Candle>> FetchAsync(string query, Timeframe timeframe, CancellationToken cancellationToken)
     {
+        await rateLimiter.WaitAsync(cancellationToken);
+
         try
         {
             using var response = await httpClient.GetAsync($"/time_series?{query}", cancellationToken);
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                logger.LogWarning("Twelve Data rate limit hit for {Query}", query);
+                throw new MarketDataRateLimitedException();
+            }
+
             response.EnsureSuccessStatusCode();
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
@@ -50,9 +60,17 @@ public sealed class TwelveDataMarketDataClient(
                 var message = root.TryGetProperty("message", out var text) ? text.GetString() : null;
                 logger.LogWarning("Twelve Data rejected {Query}: {Message}", query, message);
 
-                if (root.TryGetProperty("code", out var code) && code.TryGetInt32(out var codeValue) && codeValue is 400 or 404)
+                if (root.TryGetProperty("code", out var code) && code.TryGetInt32(out var codeValue))
                 {
-                    throw new MarketSymbolNotFoundException(message ?? "Unknown symbol.");
+                    if (codeValue == 429)
+                    {
+                        throw new MarketDataRateLimitedException();
+                    }
+
+                    if (codeValue is 400 or 404)
+                    {
+                        throw new MarketSymbolNotFoundException(message ?? "Unknown symbol.");
+                    }
                 }
 
                 throw new MarketDataUnavailableException(message ?? "Market data provider rejected the request.");
