@@ -4,7 +4,8 @@ namespace TradingChartAnalyzer.Features.Indicators;
 
 public static class MarketSnapshotBuilder
 {
-    private const int SnapshotCandles = 150;
+    private const int PrimarySnapshotCandles = 120;
+    private const int ContextSnapshotCandles = 60;
     private const int SnapshotSwings = 12;
     private const int SnapshotEvents = 6;
     private const int FutureCandlesAllowed = 50;
@@ -14,7 +15,7 @@ public static class MarketSnapshotBuilder
         var primaryCandles = candlesByTimeframe[primary];
         var currentPrice = primaryCandles[^1].Close;
 
-        var included = candlesByTimeframe.Values.SelectMany(c => c.TakeLast(SnapshotCandles)).ToList();
+        var included = candlesByTimeframe.SelectMany(pair => pair.Value.TakeLast(SnapshotCandlesFor(pair.Key, primary))).ToList();
         var range = new SnapshotRange(
             included.Min(c => c.Low),
             included.Max(c => c.High),
@@ -23,13 +24,16 @@ public static class MarketSnapshotBuilder
 
         var timeframes = candlesByTimeframe
             .OrderBy(pair => pair.Key)
-            .Select(pair => BuildTimeframe(pair.Key, pair.Value, currentPrice, range.FromTime))
+            .Select(pair => BuildTimeframe(pair.Key, pair.Value, SnapshotCandlesFor(pair.Key, primary), currentPrice, range.FromTime))
             .ToList();
 
         return new MarketSnapshot(symbol, primary.ToInterval(), Round(currentPrice, currentPrice), range, timeframes);
     }
 
-    private static TimeframeSnapshot BuildTimeframe(Timeframe timeframe, IReadOnlyList<Candle> candles, decimal currentPrice, long fromTime)
+    private static int SnapshotCandlesFor(Timeframe timeframe, Timeframe primary) =>
+        timeframe == primary ? PrimarySnapshotCandles : ContextSnapshotCandles;
+
+    private static TimeframeSnapshot BuildTimeframe(Timeframe timeframe, IReadOnlyList<Candle> candles, int snapshotCandles, decimal currentPrice, long fromTime)
     {
         var context = IndicatorContext.Create(candles);
         var last = candles.Count - 1;
@@ -53,7 +57,7 @@ public static class MarketSnapshotBuilder
             timeframe.ToInterval(),
             Round(atr, currentPrice),
             indicators,
-            candles.TakeLast(SnapshotCandles).Select(c => CompactCandle(c, currentPrice)).ToList(),
+            candles.TakeLast(snapshotCandles).Select(c => CompactCandle(c, currentPrice)).ToList(),
             swings.TakeLast(SnapshotSwings).Select(s => new SwingSnapshot(s.Time, Round(s.Price, currentPrice), s.IsHigh ? "high" : "low", s.Label)).ToList(),
             SwingDetector.FindStructureEvents(candles, context.Pivots)
                 .TakeLast(SnapshotEvents)

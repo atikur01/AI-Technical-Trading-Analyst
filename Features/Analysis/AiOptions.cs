@@ -10,5 +10,4 @@ public sealed class AiOptions
     public double Temperature { get; set; } = 0.2;
     public int MaxTokens { get; set; } = 16000;
     public int TimeoutSeconds { get; set; } = 180;
-    public int CacheMinutes { get; set; } = 5;
 }

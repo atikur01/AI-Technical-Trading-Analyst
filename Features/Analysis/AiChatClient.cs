@@ -42,8 +42,14 @@ public sealed class AiChatClient(HttpClient httpClient, IOptions<AiOptions> opti
 
             using var document = JsonDocument.Parse(body);
             LogUsage(document.RootElement, stopwatch.ElapsedMilliseconds);
-            return ExtractText(document.RootElement)
-                ?? throw new AiUnavailableException("AI provider returned an empty response.");
+            var text = ExtractText(document.RootElement);
+            if (text is null)
+            {
+                logger.LogError("AI returned no text. Status {Status}, details {Details}", GetString(document.RootElement, "status"), GetRaw(document.RootElement, "incomplete_details"));
+                throw new AiUnavailableException("AI provider returned an empty response.");
+            }
+
+            return text;
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException && !cancellationToken.IsCancellationRequested)
         {
@@ -59,6 +65,12 @@ public sealed class AiChatClient(HttpClient httpClient, IOptions<AiOptions> opti
             logger.LogInformation("AI completed in {ElapsedMs} ms with usage {Usage}", elapsedMilliseconds, usage.GetRawText());
         }
     }
+
+    private static string? GetString(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    private static string? GetRaw(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) ? value.GetRawText() : null;
 
     private static string? ExtractText(JsonElement root)
     {

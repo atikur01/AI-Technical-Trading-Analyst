@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 using TradingChartAnalyzer.Features.Analysis.Models;
 using TradingChartAnalyzer.Features.Indicators;
 using TradingChartAnalyzer.Features.MarketData;
@@ -13,7 +12,6 @@ public sealed class AnalysisService(
     IMarketDataService marketData,
     IAiChatClient aiClient,
     IMemoryCache cache,
-    IOptions<AiOptions> options,
     ILogger<AnalysisService> logger)
 {
     private const int CandlesPerTimeframe = 500;
@@ -47,7 +45,7 @@ public sealed class AnalysisService(
             logger.LogInformation("Analysis for {Symbol} {Timeframe}: {Setups} setups, {Drawings} drawings, {Warnings} warnings",
                 symbol, timeframe, result.Setups.Count, result.Drawings.Count, result.Warnings.Count);
 
-            cache.Set(cacheKey, result, TimeSpan.FromMinutes(options.Value.CacheMinutes));
+            cache.Set(cacheKey, result, TimeSpan.FromMilliseconds(timeframe.ToMilliseconds()));
             return result;
         }
         finally
@@ -104,7 +102,7 @@ public sealed class AnalysisService(
             }
 
             logger.LogWarning("AI returned unparseable analysis on attempt {Attempt}", attempt);
-            prompt = AnalysisPromptBuilder.BuildRepairPrompt(userPrompt);
+            prompt = AnalysisPromptBuilder.BuildRepairPrompt(text);
         }
 
         throw new AiResponseException("AI returned a response that could not be understood.");

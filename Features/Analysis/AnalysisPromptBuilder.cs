@@ -80,6 +80,6 @@ public static class AnalysisPromptBuilder
     public static string BuildUserPrompt(MarketSnapshot snapshot) =>
         $"JSON schema:\n{Schema}\n\n{Rules}{MacroSection(snapshot)}\n\nMarket snapshot:\n{JsonSerializer.Serialize(snapshot, AppJson.Options)}";
 
-    public static string BuildRepairPrompt(string userPrompt) =>
-        $"{userPrompt}\n\nYour previous reply was not valid JSON for the schema. Reply again with ONLY one valid JSON object.";
+    public static string BuildRepairPrompt(string invalidReply) =>
+        $"JSON schema:\n{Schema}\n\nThe following reply is not valid JSON for the schema. Fix it without changing its content and reply with ONLY one valid JSON object.\n\nReply:\n{invalidReply}";
 }
