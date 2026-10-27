@@ -55,11 +55,6 @@
         }, STEP_INTERVAL_MS);
     }
 
-    function setBusy(busy) {
-        $('#analyze-btn').toggleClass('is-busy', busy).prop('disabled', busy);
-        $('#analyze-label').text(busy ? 'Analyzing…' : 'Analyze with AI');
-    }
-
     function badge(value) {
         return '<span class="badge badge-' + esc(value) + '">' + esc(value) + '</span>';
     }
@@ -221,7 +216,6 @@
             generation++;
             running = false;
             stopSteps();
-            setBusy(false);
             App.state.analysis = null;
             selectedSetupId = null;
             $('#analysis-result').html(initialResultHtml);
@@ -240,8 +234,6 @@
                     selectSetup(this.getAttribute('data-setup-id'));
                 })
                 .on('click', '#analysis-retry, #analysis-start, #analysis-rerun', App.analysisPanel.run);
-
-            $('#analyze-btn').on('click', App.analysisPanel.run);
 
             $('#drawings-toggle').on('click', function () {
                 App.drawingRenderer.toggle();
@@ -267,7 +259,6 @@
             };
 
             App.panel.open();
-            setBusy(true);
             $('#analysis-result').html(skeleton());
             startSteps();
 
@@ -291,7 +282,6 @@
                     if (requestGeneration !== generation) return;
                     running = false;
                     stopSteps();
-                    setBusy(false);
                 });
         }
     };

@@ -4,8 +4,10 @@ namespace TradingChartAnalyzer.Features.Indicators;
 
 public static class MarketSnapshotBuilder
 {
-    private const int PrimarySnapshotCandles = 120;
-    private const int ContextSnapshotCandles = 60;
+    private const int PrimaryRangeCandles = 120;
+    private const int ContextRangeCandles = 60;
+    private const int PrimarySentCandles = 60;
+    private const int ContextSentCandles = 20;
     private const int SnapshotSwings = 12;
     private const int SnapshotEvents = 6;
     private const int FutureCandlesAllowed = 50;
@@ -15,7 +17,7 @@ public static class MarketSnapshotBuilder
         var primaryCandles = candlesByTimeframe[primary];
         var currentPrice = primaryCandles[^1].Close;
 
-        var included = candlesByTimeframe.SelectMany(pair => pair.Value.TakeLast(SnapshotCandlesFor(pair.Key, primary))).ToList();
+        var included = candlesByTimeframe.SelectMany(pair => pair.Value.TakeLast(RangeCandlesFor(pair.Key, primary))).ToList();
         var range = new SnapshotRange(
             included.Min(c => c.Low),
             included.Max(c => c.High),
@@ -24,14 +26,17 @@ public static class MarketSnapshotBuilder
 
         var timeframes = candlesByTimeframe
             .OrderBy(pair => pair.Key)
-            .Select(pair => BuildTimeframe(pair.Key, pair.Value, SnapshotCandlesFor(pair.Key, primary), currentPrice, range.FromTime))
+            .Select(pair => BuildTimeframe(pair.Key, pair.Value, SentCandlesFor(pair.Key, primary), currentPrice, range.FromTime))
             .ToList();
 
         return new MarketSnapshot(symbol, primary.ToInterval(), Round(currentPrice, currentPrice), range, timeframes);
     }
 
-    private static int SnapshotCandlesFor(Timeframe timeframe, Timeframe primary) =>
-        timeframe == primary ? PrimarySnapshotCandles : ContextSnapshotCandles;
+    private static int RangeCandlesFor(Timeframe timeframe, Timeframe primary) =>
+        timeframe == primary ? PrimaryRangeCandles : ContextRangeCandles;
+
+    private static int SentCandlesFor(Timeframe timeframe, Timeframe primary) =>
+        timeframe == primary ? PrimarySentCandles : ContextSentCandles;
 
     private static TimeframeSnapshot BuildTimeframe(Timeframe timeframe, IReadOnlyList<Candle> candles, int snapshotCandles, decimal currentPrice, long fromTime)
     {
