@@ -14,11 +14,6 @@ public static class MarketSnapshotBuilder
         var primaryCandles = candlesByTimeframe[primary];
         var currentPrice = primaryCandles[^1].Close;
 
-        var timeframes = candlesByTimeframe
-            .OrderBy(pair => pair.Key)
-            .Select(pair => BuildTimeframe(pair.Key, pair.Value, currentPrice))
-            .ToList();
-
         var included = candlesByTimeframe.Values.SelectMany(c => c.TakeLast(SnapshotCandles)).ToList();
         var range = new SnapshotRange(
             included.Min(c => c.Low),
@@ -26,10 +21,15 @@ public static class MarketSnapshotBuilder
             included.Min(c => c.OpenTimeSeconds),
             primaryCandles[^1].OpenTimeSeconds + FutureCandlesAllowed * primary.ToMilliseconds() / 1000);
 
+        var timeframes = candlesByTimeframe
+            .OrderBy(pair => pair.Key)
+            .Select(pair => BuildTimeframe(pair.Key, pair.Value, currentPrice, range.FromTime))
+            .ToList();
+
         return new MarketSnapshot(symbol, primary.ToInterval(), Round(currentPrice, currentPrice), range, timeframes);
     }
 
-    private static TimeframeSnapshot BuildTimeframe(Timeframe timeframe, IReadOnlyList<Candle> candles, decimal currentPrice)
+    private static TimeframeSnapshot BuildTimeframe(Timeframe timeframe, IReadOnlyList<Candle> candles, decimal currentPrice, long fromTime)
     {
         var context = IndicatorContext.Create(candles);
         var last = candles.Count - 1;
@@ -62,7 +62,47 @@ public static class MarketSnapshotBuilder
             SupportResistanceDetector.Detect(context.Pivots, currentPrice, atr)
                 .Select(l => l with { Price = Round(l.Price, currentPrice) })
                 .ToList(),
-            RoundFibonacci(FibonacciCalculator.Calculate(context.Pivots), currentPrice));
+            RoundFibonacci(FibonacciCalculator.Calculate(context.Pivots), currentPrice),
+            RoundSmc(SmcDetector.Detect(candles, currentPrice), currentPrice, fromTime));
+    }
+
+    private static SmcSnapshot? RoundSmc(SmcSnapshot? smc, decimal reference, long fromTime)
+    {
+        if (smc is null)
+        {
+            return null;
+        }
+
+        List<StructureEvent> Events(IReadOnlyList<StructureEvent> events) => events
+            .Where(e => e.BrokenSwingTime >= fromTime)
+            .Select(e => e with { Price = Round(e.Price, reference) })
+            .ToList();
+
+        List<SmcZone> Zones(IReadOnlyList<SmcZone> zones) => zones
+            .Where(z => z.Time >= fromTime)
+            .Select(z => z with { Top = Round(z.Top, reference), Bottom = Round(z.Bottom, reference) })
+            .ToList();
+
+        return smc with
+        {
+            SwingEvents = Events(smc.SwingEvents),
+            InternalEvents = Events(smc.InternalEvents),
+            SwingOrderBlocks = Zones(smc.SwingOrderBlocks),
+            InternalOrderBlocks = Zones(smc.InternalOrderBlocks),
+            FairValueGaps = Zones(smc.FairValueGaps),
+            EqualLevels = smc.EqualLevels
+                .Where(l => l.FromTime >= fromTime)
+                .Select(l => l with { Price = Round(l.Price, reference) })
+                .ToList(),
+            Range = smc.Range is null
+                ? null
+                : smc.Range with
+                {
+                    Top = Round(smc.Range.Top, reference),
+                    Bottom = Round(smc.Range.Bottom, reference),
+                    Equilibrium = Round(smc.Range.Equilibrium, reference)
+                }
+        };
     }
 
     private static double[] CompactCandle(Candle c, decimal reference) =>

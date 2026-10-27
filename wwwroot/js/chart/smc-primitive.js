@@ -3,6 +3,9 @@
     const BEAR = '#f23645';
     const BULL_BLOCK = '#1848cc';
     const BEAR_BLOCK = '#b22833';
+    const EQUILIBRIUM = '#878b94';
+    const ZONE_COLORS = { premium: BEAR, equilibrium: EQUILIBRIUM, discount: BULL };
+    const ZONE_LABELS = { premium: 'Premium', equilibrium: 'Equilibrium', discount: 'Discount' };
     const SWING_FONT = '600 11px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif';
     const INTERNAL_FONT = '500 9px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif';
 
@@ -93,11 +96,25 @@
             ctx.restore();
         }
 
+        drawRangeZone(ctx, zone, width) {
+            this.drawZone(ctx, zone, width, ZONE_COLORS[zone.kind], 0.12);
+            const y = this.y((zone.top + zone.bottom) / 2);
+            if (y == null) return;
+            ctx.save();
+            ctx.font = INTERNAL_FONT;
+            ctx.fillStyle = this.rgba(ZONE_COLORS[zone.kind], 1);
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ZONE_LABELS[zone.kind], width - 4, y);
+            ctx.restore();
+        }
+
         draw(ctx, size) {
             if (!this.result || !App.state.candles.length) return;
             const result = this.result;
+            result.zones.forEach((zone) => this.drawRangeZone(ctx, zone, size.width));
             result.fairValueGaps.forEach((gap) => this.drawZone(ctx, gap, size.width, gap.bull ? BULL : BEAR, 0.2));
-            result.orderBlocks.forEach((block) => this.drawZone(ctx, block, size.width, block.bull ? BULL_BLOCK : BEAR_BLOCK, 0.3));
+            result.orderBlocks.forEach((block) => this.drawZone(ctx, block, size.width, block.bull ? BULL_BLOCK : BEAR_BLOCK, block.internal ? 0.3 : 0.45));
             result.structures.forEach((event) => this.drawStructure(ctx, event));
             result.equalLevels.forEach((equal) => this.drawEqualLevel(ctx, equal));
             result.extremes.forEach((extreme) => this.drawExtreme(ctx, extreme, size.width));

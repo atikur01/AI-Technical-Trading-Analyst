@@ -59,6 +59,12 @@ public static class AnalysisPromptBuilder
         "Every price must lie inside snapshot.validRange. For long setups stopLoss < entry < every takeProfit; for short setups the reverse. " +
         "Each setup must have one position drawing. " +
         "For rules.indicator prefer \"ema\" with params {\"fast\":9,\"slow\":50,\"atrStop\":2,\"rewardRisk\":2}, the rule set that held up in out-of-sample backtests; use \"fib\", \"rsi\" or \"structure\" only when clearly better justified. " +
+        "Each timeframe carries an smc object (Smart Money Concepts): swingTrend/internalTrend, swingEvents and internalEvents (BOS continues the trend, CHoCH is the first break against it), unmitigated order blocks and fair value gaps, equalLevels (EQH/EQL liquidity pools) and range. " +
+        "range.zone tells whether price sits in premium (above 50% of the swing range), discount (below) or equilibrium: favor longs from discount and shorts from premium, and treat a long entered in premium or a short entered in discount as lower quality. " +
+        "range.strongHigh or strongLow marks the swing extreme expected to hold; a target at the opposite weak extreme is more likely to be reached. " +
+        "Draw unmitigated order blocks and fair value gaps that support a setup as zone drawings (kind orderblock or fvg) using the zone time as from.time, top as from.price and bottom as to.price, and use EQH/EQL as take-profit targets or stop-clustering liquidity. " +
+        "A CHoCH against the higher-timeframe trend is a warning to stay out, not an entry signal. " +
+        "The projection drawing must be consistent with the first setup: its first candle opens at snapshot.currentPrice, each next candle opens at the previous close, and when the setup entry is below the current price (long) or above it (short) the first candles must travel to the entry first (bearish candles for a long pullback, bullish for a short), touch the entry, and only then continue toward the take profit with candles in the setup direction. " +
         "Respond with a single JSON object and nothing else.";
 
     private const string MacroRules =

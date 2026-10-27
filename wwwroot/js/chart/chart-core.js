@@ -181,18 +181,12 @@
             getOverlay(key, function () { return lineSeries(overlayStyles.vwap.color, overlayStyles.vwap.title); })
                 .setData(App.indicators.vwap(candles));
         } else if (key === 'smc') {
-            const show = {
-                swing: App.state.indicators.has('smc'),
-                internal: App.state.indicators.has('smcInternal'),
-                zones: App.state.indicators.has('smcZones'),
-                equal: App.state.indicators.has('smcEqual')
-            };
-            if (!Object.values(show).some(Boolean)) return removeSmc();
+            if (!enabled) return removeSmc();
             if (!smcPrimitive) {
                 smcPrimitive = new App.SmcPrimitive();
                 candleSeries.attachPrimitive(smcPrimitive);
             }
-            smcPrimitive.setResult(App.smc.compute(candles, show));
+            smcPrimitive.setResult(App.smc.compute(candles));
         } else if (key === 'bollinger') {
             if (!enabled) {
                 removeOverlay('bbUpper');
@@ -358,9 +352,8 @@
         setIndicator: function (key, enabled) {
             if (enabled) App.state.indicators.add(key);
             else App.state.indicators.delete(key);
-            const isSmc = key.indexOf('smc') === 0;
-            applyIndicator(isSmc ? 'smc' : key);
-            if (isSmc || key === 'bollinger' || key in emaPeriods || key === 'vwap') return;
+            applyIndicator(key);
+            if (key === 'smc' || key === 'bollinger' || key in emaPeriods || key === 'vwap') return;
             const range = chart.timeScale().getVisibleLogicalRange();
             if (range) {
                 allCharts().forEach(function (c) { c.timeScale().setVisibleLogicalRange(range); });

@@ -8,8 +8,10 @@
             const candles = App.state.candles;
             if (!candles.length) return;
 
-            const lastTime = candles[candles.length - 1].time;
             const step = App.timeframeStep();
+            const lastCandleTime = candles[candles.length - 1].time;
+            const isForming = lastCandleTime + step > Date.now() / 1000;
+            const lastTime = isForming ? lastCandleTime - step : lastCandleTime;
             const color = d.color || DEFAULT_COLOR;
             const slots = d.candles.map((c, index) => ({
                 x: this.x(lastTime + (index + 1) * step),

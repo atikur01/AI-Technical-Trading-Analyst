@@ -17,7 +17,8 @@ public sealed record TimeframeSnapshot(
     IReadOnlyList<SwingSnapshot> Swings,
     IReadOnlyList<StructureEvent> StructureEvents,
     IReadOnlyList<PriceLevel> Levels,
-    FibonacciSet? Fibonacci);
+    FibonacciSet? Fibonacci,
+    SmcSnapshot? Smc);
 
 public sealed record IndicatorValues(
     double Ema20,
