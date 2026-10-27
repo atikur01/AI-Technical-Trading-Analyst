@@ -5,9 +5,7 @@
     let loaded = null;
     let assetFilter = 'all';
 
-    function esc(text) {
-        return $('<div>').text(text).html();
-    }
+    const esc = App.format.esc;
 
     function display(item) {
         if (item.assetClass === 'crypto') {
@@ -61,6 +59,7 @@
         $('#last-price').text('--');
         document.title = symbol;
 
+        App.drawingTools.setTool('cursor');
         App.drawingRenderer.clear();
         App.manualDrawings.load();
         App.analysisPanel.reset();
@@ -105,14 +104,14 @@
             $('#symbol-search').on('input', render).on('keydown', function (event) {
                 if (event.key === 'ArrowDown') moveHighlight(1);
                 else if (event.key === 'ArrowUp') moveHighlight(-1);
-                else if (event.key === 'Enter') select($('#symbol-list .symbol-item.bg-tv-border').data('symbol'));
+                else if (event.key === 'Enter') select($('#symbol-list .symbol-item.bg-tv-border').attr('data-symbol'));
                 else if (event.key === 'Escape') close();
                 else return;
                 event.preventDefault();
             });
 
             $('#symbol-list').on('click', '.symbol-item', function () {
-                select($(this).data('symbol'));
+                select($(this).attr('data-symbol'));
             });
         }
     };

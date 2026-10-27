@@ -1,14 +1,17 @@
 (function ($, App) {
+    const htmlEntities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
     function decimalsFor(value) {
         const abs = Math.abs(value);
         if (abs >= 1000) return 2;
         if (abs >= 1) return 4;
-        return 6;
+        if (abs === 0) return 6;
+        return Math.min(12, Math.ceil(-Math.log10(abs)) + 4);
     }
 
     App.format = {
         esc: function (text) {
-            return $('<div></div>').text(text == null ? '' : String(text)).html();
+            return (text == null ? '' : String(text)).replace(/[&<>"']/g, function (char) { return htmlEntities[char]; });
         },
         price: function (value) {
             if (value == null || isNaN(value)) return '--';

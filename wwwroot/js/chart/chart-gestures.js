@@ -122,6 +122,7 @@
         if (x > App.chartCore.plotWidth() || y > App.chartCore.plotHeight()) return;
 
         lastY = clientY(event);
+        endPricePan();
         $(document)
             .on('mousemove.pricepan touchmove.pricepan', movePricePan)
             .on('mouseup.pricepan touchend.pricepan touchcancel.pricepan', endPricePan);
@@ -134,7 +135,6 @@
         event.preventDefault();
         event.stopPropagation();
         App.chartCore.zoomPrice(event.deltaY < 0 ? PRICE_ZOOM_IN : PRICE_ZOOM_OUT);
-        App.chartControls.syncButtons();
     }
 
     App.chartGestures = {

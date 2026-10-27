@@ -46,7 +46,4 @@ public static class TimeframeExtensions
         timeframe = default;
         return false;
     }
-
-    public static IReadOnlyList<Timeframe> HigherTimeframes(this Timeframe timeframe) =>
-        Enum.GetValues<Timeframe>().Where(t => t > timeframe && t >= Timeframe.H1).ToList();
 }

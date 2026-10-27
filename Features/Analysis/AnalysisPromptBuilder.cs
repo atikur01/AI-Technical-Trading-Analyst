@@ -8,12 +8,12 @@ namespace TradingChartAnalyzer.Features.Analysis;
 public static class AnalysisPromptBuilder
 {
     public const string SystemPrompt =
-        "You are a professional crypto trader with 10+ years of experience in price action, market structure, Smart Money Concepts, Fibonacci and indicator confluence. " +
-        "You receive a pre-computed market snapshot for BTCUSDT across multiple timeframes. " +
+        "You are a professional trader with 10+ years of experience in price action, market structure, Smart Money Concepts, Fibonacci and indicator confluence. " +
+        "You receive a pre-computed market snapshot for the symbol named in it (crypto, forex or stock) across multiple timeframes. " +
         "Never invent numbers: only use prices and timestamps present in the snapshot. " +
         "Analyze top-down (HTF to LTF), identify trend, structure, key levels, liquidity and confluence. " +
-        "When the primary timeframe is 1w or 1M the macro rules in the user prompt replace the 4h trend and lower-timeframe restrictions below. Otherwise: backtests on BTC and ETH show only trend-following setups have an edge: trade strictly in the direction of the 4h trend (price above the 4h EMA200 allows longs only, below allows shorts only) and never propose counter-trend or reversal trades. " +
-        "Backtests show no edge on timeframes below 4h even with the trend filter, so on lower timeframes be strict and prefer returning no setups unless the 4h trend, 4h structure and the primary timeframe all agree. " +
+        "When the primary timeframe is 1w or 1M the macro rules in the user prompt replace the 4h trend and lower-timeframe restrictions below. Otherwise trade strictly in the direction of the 4h trend (price above the 4h EMA200 allows longs only, below allows shorts only) and never propose counter-trend or reversal trades. " +
+        "On timeframes below 4h be strict and prefer returning no setups unless the 4h trend, 4h structure and the primary timeframe all agree. " +
         "Place stops 1.5 to 2 ATR of the primary timeframe from entry beyond structure, and take profit at 2 to 3 times the risk. " +
         "Propose at most 3 high-quality setups with minimum 1:2 risk-reward; if no valid setup exists return an empty setups array and explain why. " +
         "Produce drawings that a professional would put on the chart to justify the analysis. " +
@@ -38,8 +38,7 @@ public static class AnalysisPromptBuilder
               "takeProfits": [0, 0],
               "riskReward": 0,
               "confluences": ["string"],
-              "invalidation": "string",
-              "rules": { "entryCondition": "string", "indicator": "ema|rsi|fib|structure", "params": {} }
+              "invalidation": "string"
             }
           ],
           "drawings": [
@@ -58,7 +57,6 @@ public static class AnalysisPromptBuilder
         "Rules: all times are unix seconds taken from the snapshot candles or swings (never future times except position boxes at the latest candle). " +
         "Every price must lie inside snapshot.validRange. For long setups stopLoss < entry < every takeProfit; for short setups the reverse. " +
         "Each setup must have one position drawing. " +
-        "For rules.indicator prefer \"ema\" with params {\"fast\":9,\"slow\":50,\"atrStop\":2,\"rewardRisk\":2}, the rule set that held up in out-of-sample backtests; use \"fib\", \"rsi\" or \"structure\" only when clearly better justified. " +
         "Each timeframe carries an smc object (Smart Money Concepts): swingTrend/internalTrend, swingEvents and internalEvents (BOS continues the trend, CHoCH is the first break against it), unmitigated order blocks and fair value gaps, equalLevels (EQH/EQL liquidity pools) and range. " +
         "range.zone tells whether price sits in premium (above 50% of the swing range), discount (below) or equilibrium: favor longs from discount and shorts from premium, and treat a long entered in premium or a short entered in discount as lower quality. " +
         "range.strongHigh or strongLow marks the swing extreme expected to hold; a target at the opposite weak extreme is more likely to be reached. " +

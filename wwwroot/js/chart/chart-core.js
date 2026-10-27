@@ -28,8 +28,10 @@
     const MIN_PRICE_ZOOM = 0.05;
     const MAX_PRICE_ZOOM = 20;
     const MAX_DIVERGENCES = 20;
+    const INDICATOR_REFRESH_MS = 1000;
 
     let loadToken = 0;
+    let indicatorTimer = null;
     let priceShift = 0;
     let priceZoom = 1;
     let syncing = false;
@@ -267,6 +269,14 @@
         ['smc', 'ema20', 'ema50', 'ema200', 'vwap', 'bollinger', 'rsi', 'rsidiv', 'macd'].forEach(applyIndicator);
     }
 
+    function scheduleIndicatorRefresh() {
+        if (indicatorTimer) return;
+        indicatorTimer = setTimeout(function () {
+            indicatorTimer = null;
+            refreshIndicators();
+        }, INDICATOR_REFRESH_MS);
+    }
+
     function showError(message) {
         $('#chart-loading').addClass('hidden');
         $('#chart-error-text').text(message);
@@ -362,6 +372,7 @@
 
         load: function () {
             const token = ++loadToken;
+            App.realtimeFeed.disconnect();
             $('#chart-error').addClass('hidden').removeClass('flex');
             $('#chart-loading').removeClass('hidden');
 
@@ -370,16 +381,23 @@
                     if (token !== loadToken) return;
                     const candles = rows.map(toCandle);
                     App.state.candles = candles;
-                    candleSeries.setData(candles);
-                    refreshFutureTimes();
-                    refreshIndicators();
-                    refreshMarkers();
-                    App.chartCore.setAutoScale(true);
-                    showLatest(candles.length);
-                    App.chartControls.syncButtons();
-                    renderLegend(candles[candles.length - 1]);
-                    updateLastPrice();
-                    $('#chart-loading').addClass('hidden');
+
+                    try {
+                        candleSeries.setData(candles);
+                        refreshFutureTimes();
+                        refreshIndicators();
+                        refreshMarkers();
+                        App.chartCore.setAutoScale(true);
+                        showLatest(candles.length);
+                        renderLegend(candles[candles.length - 1]);
+                        updateLastPrice();
+                    } catch (error) {
+                        console.error(error);
+                        App.toast.show('Some chart elements could not be rendered.', 'warning');
+                    } finally {
+                        $('#chart-loading').addClass('hidden');
+                    }
+
                     App.realtimeFeed.connect(App.state.symbol, App.state.timeframe);
                     $(document).trigger('chart:loaded');
                 })
@@ -399,7 +417,7 @@
             else candles.push(candle);
             candleSeries.update(candle);
             if (candle.time !== last.time) refreshFutureTimes();
-            refreshIndicators();
+            scheduleIndicatorRefresh();
             updateLastPrice();
         },
 

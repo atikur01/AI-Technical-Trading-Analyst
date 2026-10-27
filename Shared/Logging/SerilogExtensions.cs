@@ -44,7 +44,14 @@ public static class SerilogExtensions
 
         foreach (var file in Directory.EnumerateFiles(logDirectory))
         {
-            File.Delete(file);
+            try
+            {
+                File.Delete(file);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                continue;
+            }
         }
     }
 }

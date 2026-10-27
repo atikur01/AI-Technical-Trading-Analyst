@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace TradingChartAnalyzer.Features.Analysis.Models;
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "type", UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FailSerialization)]
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type", UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FailSerialization, IgnoreUnrecognizedTypeDiscriminators = true)]
 [JsonDerivedType(typeof(TrendlineDrawing), "trendline")]
 [JsonDerivedType(typeof(HorizontalDrawing), "horizontal")]
 [JsonDerivedType(typeof(FibonacciDrawing), "fibonacci")]
@@ -10,7 +10,7 @@ namespace TradingChartAnalyzer.Features.Analysis.Models;
 [JsonDerivedType(typeof(PositionDrawing), "position")]
 [JsonDerivedType(typeof(MarkerDrawing), "marker")]
 [JsonDerivedType(typeof(ProjectionDrawing), "projection")]
-public abstract class Drawing
+public class Drawing
 {
     public string? SetupId { get; set; }
     public string? Label { get; set; }

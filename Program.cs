@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Razor;
 using TradingChartAnalyzer.Features.Analysis;
 using TradingChartAnalyzer.Features.MarketData;
@@ -8,8 +9,11 @@ using TradingChartAnalyzer.Shared.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddDotEnvFile();
+builder.Configuration.AddDotEnvFile(Path.Combine(builder.Environment.ContentRootPath, ".env"));
 builder.AddFileLogging();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto);
 
 builder.Services
     .AddControllersWithViews()
@@ -31,6 +35,7 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 
 if (!app.Environment.IsDevelopment())

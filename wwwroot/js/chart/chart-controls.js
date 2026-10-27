@@ -4,27 +4,11 @@
     const PAN_STEP = 0.1;
     const PAN_STEP_FAST = 0.5;
 
-    let priceMode = 'normal';
-
-    function syncButtons() {
-        $('#ctl-auto').toggleClass('is-active', App.chartCore.isAutoScale());
-        $('#ctl-log').toggleClass('is-active', priceMode === 'log');
-        $('#ctl-percent').toggleClass('is-active', priceMode === 'percent');
-    }
-
-    function setPriceMode(mode) {
-        priceMode = priceMode === mode ? 'normal' : mode;
-        App.chartCore.setPriceMode(priceMode);
-        syncButtons();
-    }
-
     function reset() {
-        priceMode = 'normal';
         App.chartCore.setPriceMode('normal');
         App.chartCore.setAutoScale(true);
         App.chartCore.fit();
         App.chartCore.scrollToLatest();
-        syncButtons();
     }
 
     function screenshot() {
@@ -43,31 +27,12 @@
 
     function toggleAuto() {
         App.chartCore.setAutoScale(!App.chartCore.isAutoScale());
-        syncButtons();
     }
 
     App.chartControls = {
-        syncButtons: syncButtons,
         reset: reset,
         screenshot: screenshot,
         toggleAuto: toggleAuto,
-
-        init: function () {
-            $('#ctl-fit').on('click', App.chartCore.fit);
-            $('#ctl-latest').on('click', App.chartCore.scrollToLatest);
-            $('#ctl-reset').on('click', reset);
-            $('#ctl-auto').on('click', toggleAuto);
-            $('#ctl-log').on('click', function () { setPriceMode('log'); });
-            $('#ctl-percent').on('click', function () { setPriceMode('percent'); });
-            $('#ctl-screenshot').on('click', screenshot);
-            $('#ctl-zoom-in').on('click', function () { App.chartCore.zoom(ZOOM_IN); });
-            $('#ctl-zoom-out').on('click', function () { App.chartCore.zoom(ZOOM_OUT); });
-
-            $('#chart-main').on('mouseup wheel dblclick', function () {
-                setTimeout(syncButtons, 0);
-            });
-            syncButtons();
-        },
 
         handleKey: function (event) {
             const fast = event.shiftKey;

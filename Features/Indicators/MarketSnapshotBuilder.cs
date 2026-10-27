@@ -129,7 +129,22 @@ public static class MarketSnapshotBuilder
 
     private static double Safe(double value) => double.IsNaN(value) ? 0 : value;
 
-    private static decimal Round(decimal value, decimal reference) => Math.Round(value, reference >= 10 ? 2 : 6);
+    private static decimal Round(decimal value, decimal reference) => Math.Round(value, DecimalsFor(reference));
 
-    private static double Round(double value, decimal reference) => Math.Round(Safe(value), reference >= 10 ? 2 : 6);
+    private static double Round(double value, decimal reference) => Math.Round(Safe(value), DecimalsFor(reference));
+
+    private static int DecimalsFor(decimal reference)
+    {
+        if (reference >= 10)
+        {
+            return 2;
+        }
+
+        if (reference >= 1)
+        {
+            return 4;
+        }
+
+        return reference <= 0 ? 6 : Math.Min(12, (int)Math.Ceiling(-Math.Log10((double)reference)) + 4);
+    }
 }

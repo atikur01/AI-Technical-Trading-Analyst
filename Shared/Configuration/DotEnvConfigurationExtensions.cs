@@ -1,16 +1,17 @@
+using Microsoft.Extensions.Configuration.Memory;
+
 namespace TradingChartAnalyzer.Shared.Configuration;
 
 public static class DotEnvConfigurationExtensions
 {
-    public static IConfigurationBuilder AddDotEnvFile(this IConfigurationBuilder configuration, string path = ".env")
+    public static IConfigurationBuilder AddDotEnvFile(this IConfigurationBuilder configuration, string path)
     {
-        var fullPath = Path.Combine(Directory.GetCurrentDirectory(), path);
-        if (!File.Exists(fullPath))
+        if (!File.Exists(path))
         {
             return configuration;
         }
 
-        var values = File.ReadLines(fullPath)
+        var values = File.ReadLines(path)
             .Select(line => line.Trim())
             .Where(line => line.Length > 0 && !line.StartsWith('#'))
             .Select(line => line.Split('=', 2))
@@ -20,6 +21,9 @@ public static class DotEnvConfigurationExtensions
                 parts => parts[1].Trim().Trim('"', '\''),
                 StringComparer.OrdinalIgnoreCase);
 
-        return configuration.AddInMemoryCollection(values!);
+        var insertAt = configuration.Sources.ToList().FindLastIndex(source => source is FileConfigurationSource) + 1;
+        configuration.Sources.Insert(insertAt, new MemoryConfigurationSource { InitialData = values! });
+
+        return configuration;
     }
 }

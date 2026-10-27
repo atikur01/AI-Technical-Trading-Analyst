@@ -6,6 +6,8 @@ namespace TradingChartAnalyzer.Features.Analysis;
 
 public sealed class AiChatClient(HttpClient httpClient, IOptions<AiOptions> options, ILogger<AiChatClient> logger) : IAiChatClient
 {
+    private const int MaxLoggedBodyLength = 500;
+
     private readonly AiOptions _options = options.Value;
 
     public async Task<string> CompleteJsonAsync(string systemPrompt, string userPrompt, CancellationToken cancellationToken)
@@ -34,7 +36,7 @@ public sealed class AiChatClient(HttpClient httpClient, IOptions<AiOptions> opti
 
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogError("AI request failed with {StatusCode}: {Body}", (int)response.StatusCode, body);
+                logger.LogError("AI request failed with {StatusCode}: {Body}", (int)response.StatusCode, body.Length > MaxLoggedBodyLength ? body[..MaxLoggedBodyLength] : body);
                 throw new AiUnavailableException("AI provider returned an error.");
             }
 
@@ -67,8 +69,10 @@ public sealed class AiChatClient(HttpClient httpClient, IOptions<AiOptions> opti
 
         var texts = output.EnumerateArray()
             .Where(item => item.TryGetProperty("type", out var type) && type.GetString() == "message")
+            .Where(item => item.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.Array)
             .SelectMany(item => item.GetProperty("content").EnumerateArray())
             .Where(part => part.TryGetProperty("type", out var type) && type.GetString() == "output_text")
+            .Where(part => part.TryGetProperty("text", out var text) && text.ValueKind == JsonValueKind.String)
             .Select(part => part.GetProperty("text").GetString())
             .Where(text => !string.IsNullOrWhiteSpace(text));
 

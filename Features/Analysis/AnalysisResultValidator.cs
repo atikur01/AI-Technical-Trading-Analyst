@@ -23,29 +23,37 @@ public static partial class AnalysisResultValidator
     [GeneratedRegex("^#[0-9a-fA-F]{6}$")]
     private static partial Regex HexColor();
 
+    [GeneratedRegex("^[A-Za-z0-9_-]{1,32}$")]
+    private static partial Regex SetupIdPattern();
+
     public static AnalysisResult Validate(AnalysisResult raw, MarketSnapshot snapshot)
     {
         var range = snapshot.ValidRange;
         var minPrice = range.MinPrice * (1 - RangeMargin);
         var maxPrice = range.MaxPrice * (1 + RangeMargin);
-        var result = new AnalysisResult { Warnings = raw.Warnings.ToList() };
+        var result = new AnalysisResult { Warnings = (raw.Warnings ?? []).Where(w => w is not null).ToList() };
 
         bool PriceOk(decimal price) => price >= minPrice && price <= maxPrice;
         bool TimeOk(long time) => time >= range.FromTime && time <= range.ToTime;
-        bool PointOk(ChartPoint point) => PriceOk(point.Price) && TimeOk(point.Time);
+        bool PointOk(ChartPoint? point) => point is not null && PriceOk(point.Price) && TimeOk(point.Time);
 
         result.Analysis = NormalizeAnalysis(raw.Analysis, PriceOk, result.Warnings);
-        result.Setups = ValidateSetups(raw.Setups, PriceOk, AnalysisTrendFilter.AllowedDirection(snapshot), result.Warnings);
+        var idMap = new Dictionary<string, string>();
+        var rawSetups = (raw.Setups ?? []).Where(s => s is not null).ToList();
+        result.Setups = ValidateSetups(rawSetups, PriceOk, AnalysisTrendFilter.AllowedDirection(snapshot), idMap, result.Warnings);
 
         var setupsById = result.Setups.ToDictionary(s => s.Id);
         var validated = new List<Drawing>();
 
-        foreach (var drawing in raw.Drawings)
+        foreach (var drawing in (raw.Drawings ?? []).Where(d => d is not null))
         {
+            var rawSetupId = drawing.SetupId?.Trim();
+            drawing.SetupId = rawSetupId is not null && idMap.TryGetValue(rawSetupId, out var mappedId) ? mappedId : null;
+
             var normalized = NormalizeDrawing(drawing, setupsById, PriceOk, TimeOk, PointOk);
             if (normalized is null)
             {
-                result.Warnings.Add($"Dropped invalid {drawing.GetType().Name.Replace("Drawing", string.Empty).ToLowerInvariant()} drawing.");
+                result.Warnings.Add($"Dropped invalid {DrawingName(drawing)} drawing.");
                 continue;
             }
 
@@ -77,12 +85,13 @@ public static partial class AnalysisResultValidator
         analysis.Trend.Htf = Pick(analysis.Trend.Htf, Trends, "ranging");
         analysis.Trend.Ltf = Pick(analysis.Trend.Ltf, Trends, "ranging");
         analysis.Bias = Pick(analysis.Bias, Biases, "neutral");
-        analysis.Confidence = Math.Clamp(analysis.Confidence, 0, 100);
+        analysis.Confidence = Math.Round(Math.Clamp(ToPercent(analysis.Confidence), 0, 100));
         analysis.Summary = analysis.Summary?.Trim() ?? string.Empty;
         analysis.MarketStructure = analysis.MarketStructure?.Trim() ?? string.Empty;
 
         var levels = (analysis.KeyLevels ?? [])
-            .Select(l => { l.Type = l.Type?.Trim().ToLowerInvariant() ?? string.Empty; l.Strength = Math.Clamp(l.Strength, 1, 5); return l; })
+            .Where(l => l is not null)
+            .Select(l => { l.Type = l.Type?.Trim().ToLowerInvariant() ?? string.Empty; l.Strength = Math.Round(Math.Clamp(l.Strength, 1, 5)); return l; })
             .Where(l => priceOk(l.Price) && (l.Type == "support" || l.Type == "resistance"))
             .ToList();
 
@@ -95,7 +104,12 @@ public static partial class AnalysisResultValidator
         return analysis;
     }
 
-    private static List<TradeSetup> ValidateSetups(List<TradeSetup> setups, Func<decimal, bool> priceOk, string? allowedDirection, List<string> warnings)
+    private static List<TradeSetup> ValidateSetups(
+        List<TradeSetup> setups,
+        Func<decimal, bool> priceOk,
+        string? allowedDirection,
+        Dictionary<string, string> idMap,
+        List<string> warnings)
     {
         var valid = new List<TradeSetup>();
 
@@ -115,7 +129,9 @@ public static partial class AnalysisResultValidator
                 continue;
             }
 
-            setup.Id = string.IsNullOrWhiteSpace(setup.Id) || valid.Any(s => s.Id == setup.Id) ? $"setup-{valid.Count + 1}" : setup.Id.Trim();
+            var rawId = setup.Id?.Trim() ?? string.Empty;
+            setup.Id = SetupIdPattern().IsMatch(rawId) && valid.All(s => s.Id != rawId) ? rawId : NextSetupId(valid);
+            idMap.TryAdd(rawId, setup.Id);
             setup.Type = Pick(setup.Type, SetupTypes, "pullback");
             setup.RiskReward = Math.Round(Math.Abs(setup.TakeProfits[0] - setup.Entry) / Math.Abs(setup.Entry - setup.StopLoss), 2);
             setup.Confluences = (setup.Confluences ?? []).Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).ToList();
@@ -169,7 +185,7 @@ public static partial class AnalysisResultValidator
         IReadOnlyDictionary<string, TradeSetup> setups,
         Func<decimal, bool> priceOk,
         Func<long, bool> timeOk,
-        Func<ChartPoint, bool> pointOk)
+        Func<ChartPoint?, bool> pointOk)
     {
         drawing.Label = Truncate(drawing.Label);
 
@@ -234,6 +250,24 @@ public static partial class AnalysisResultValidator
                 return null;
         }
     }
+
+    private static string NextSetupId(List<TradeSetup> valid)
+    {
+        var number = valid.Count + 1;
+        while (valid.Any(s => s.Id == $"setup-{number}"))
+        {
+            number++;
+        }
+
+        return $"setup-{number}";
+    }
+
+    private static string DrawingName(Drawing drawing) =>
+        drawing.GetType() == typeof(Drawing)
+            ? "unknown"
+            : drawing.GetType().Name.Replace("Drawing", string.Empty).ToLowerInvariant();
+
+    private static double ToPercent(double value) => value is > 0 and <= 1 ? value * 100 : value;
 
     private static string Pick(string? value, string[] allowed, string fallback) =>
         allowed.FirstOrDefault(a => string.Equals(a, value?.Trim(), StringComparison.OrdinalIgnoreCase)) ?? fallback;

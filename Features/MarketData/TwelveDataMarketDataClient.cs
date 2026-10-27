@@ -49,20 +49,25 @@ public sealed class TwelveDataMarketDataClient(
             {
                 var message = root.TryGetProperty("message", out var text) ? text.GetString() : null;
                 logger.LogWarning("Twelve Data rejected {Query}: {Message}", query, message);
+
+                if (root.TryGetProperty("code", out var code) && code.TryGetInt32(out var codeValue) && codeValue is 400 or 404)
+                {
+                    throw new MarketSymbolNotFoundException(message ?? "Unknown symbol.");
+                }
+
                 throw new MarketDataUnavailableException(message ?? "Market data provider rejected the request.");
             }
 
-            var step = timeframe.ToMilliseconds();
-            return root.GetProperty("values").EnumerateArray().Select(row => ParseCandle(row, step)).ToList();
+            return root.GetProperty("values").EnumerateArray().Select(row => ParseCandle(row, timeframe)).ToList();
         }
-        catch (Exception exception) when (exception is HttpRequestException or JsonException or KeyNotFoundException)
+        catch (Exception exception) when (MarketDataFailure.IsProviderFailure(exception))
         {
             logger.LogError(exception, "Twelve Data request failed for {Query}", query);
             throw new MarketDataUnavailableException("Market data provider is currently unavailable.", exception);
         }
     }
 
-    private static Candle ParseCandle(JsonElement row, long step)
+    private static Candle ParseCandle(JsonElement row, Timeframe timeframe)
     {
         var openTime = DateTimeOffset.Parse(
             row.GetProperty("datetime").GetString()!,
@@ -75,9 +80,21 @@ public sealed class TwelveDataMarketDataClient(
             ParseDecimal(row, "high"),
             ParseDecimal(row, "low"),
             ParseDecimal(row, "close"),
-            row.TryGetProperty("volume", out _) ? ParseDecimal(row, "volume") : 0m,
-            openTime + step - 1);
+            ParseVolume(row),
+            CloseTime(openTime, timeframe));
     }
+
+    private static long CloseTime(long openTime, Timeframe timeframe) =>
+        timeframe == Timeframe.MN1
+            ? DateTimeOffset.FromUnixTimeMilliseconds(openTime).AddMonths(1).ToUnixTimeMilliseconds() - 1
+            : openTime + timeframe.ToMilliseconds() - 1;
+
+    private static decimal ParseVolume(JsonElement row) =>
+        row.TryGetProperty("volume", out var volume)
+        && volume.ValueKind == JsonValueKind.String
+        && decimal.TryParse(volume.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed
+            : 0m;
 
     private static decimal ParseDecimal(JsonElement row, string name) =>
         decimal.Parse(row.GetProperty(name).GetString()!, CultureInfo.InvariantCulture);

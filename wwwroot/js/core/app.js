@@ -39,7 +39,8 @@
             if ($(event.target).is('input, select, textarea')) return;
 
             if (event.ctrlKey || event.metaKey) {
-                if (!event.altKey && App.drawingTools.handleShortcut(event)) event.preventDefault();
+                const hasTextSelection = window.getSelection().toString().length > 0;
+                if (!event.altKey && !hasTextSelection && App.drawingTools.handleShortcut(event)) event.preventDefault();
                 return;
             }
             if (event.altKey) return;
@@ -88,7 +89,6 @@
         });
 
         App.chartCore.init();
-        App.chartControls.init();
         App.drawingTools.init();
         App.chartGestures.init();
         App.symbolSearch.init();

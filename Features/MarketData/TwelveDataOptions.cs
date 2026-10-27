@@ -6,8 +6,8 @@ public sealed class TwelveDataOptions
 
     public string RestBaseUrl { get; set; } = "https://api.twelvedata.com";
     public string ApiKey { get; set; } = string.Empty;
-    public int CacheSeconds { get; set; } = 15;
-    public int PollSeconds { get; set; } = 20;
+    public int CacheSeconds { get; set; } = 30;
+    public int PollSeconds { get; set; } = 60;
     public List<string> ForexPairs { get; set; } = [];
     public List<string> Stocks { get; set; } = [];
 }

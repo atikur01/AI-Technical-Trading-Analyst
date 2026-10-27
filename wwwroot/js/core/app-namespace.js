@@ -24,6 +24,10 @@ window.App = window.App || {};
         analysis: null
     };
 
+    App.isCryptoSymbol = function (symbol) {
+        return symbol.length > 4 && symbol.endsWith('USDT');
+    };
+
     App.timeframeStep = function () {
         return App.timeframeSeconds[App.state.timeframe];
     };

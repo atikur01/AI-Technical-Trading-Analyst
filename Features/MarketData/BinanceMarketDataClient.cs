@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -29,33 +30,6 @@ public sealed class BinanceMarketDataClient(
         return candles;
     }
 
-    public async Task<IReadOnlyList<Candle>> GetKlinesRangeAsync(string symbol, Timeframe timeframe, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
-    {
-        var step = timeframe.ToMilliseconds();
-        var cursor = from.ToUnixTimeMilliseconds();
-        var end = to.ToUnixTimeMilliseconds();
-        var result = new List<Candle>();
-
-        while (cursor < end && result.Count < _options.MaxRangeCandles)
-        {
-            var page = await FetchAsync($"symbol={symbol}&interval={timeframe.ToInterval()}&startTime={cursor}&endTime={end}&limit={MaxPageSize}", cancellationToken);
-            if (page.Count == 0)
-            {
-                break;
-            }
-
-            result.AddRange(page);
-            cursor = page[^1].OpenTime + step;
-
-            if (page.Count < MaxPageSize)
-            {
-                break;
-            }
-        }
-
-        return result;
-    }
-
     public async Task<IReadOnlyList<string>> GetSymbolsAsync(CancellationToken cancellationToken)
     {
         const string key = "symbols";
@@ -81,7 +55,7 @@ public sealed class BinanceMarketDataClient(
             cache.Set(key, symbols, TimeSpan.FromHours(1));
             return symbols;
         }
-        catch (HttpRequestException exception)
+        catch (Exception exception) when (MarketDataFailure.IsProviderFailure(exception))
         {
             logger.LogError(exception, "Binance exchange info request failed");
             throw new MarketDataUnavailableException("Market data provider is currently unavailable.", exception);
@@ -107,12 +81,17 @@ public sealed class BinanceMarketDataClient(
         try
         {
             using var response = await httpClient.GetAsync($"/api/v3/klines?{query}", cancellationToken);
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                throw new MarketSymbolNotFoundException("Unknown symbol or unsupported request.");
+            }
+
             response.EnsureSuccessStatusCode();
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
             return document.RootElement.EnumerateArray().Select(ParseCandle).ToList();
         }
-        catch (HttpRequestException exception)
+        catch (Exception exception) when (MarketDataFailure.IsProviderFailure(exception))
         {
             logger.LogError(exception, "Binance klines request failed for {Query}", query);
             throw new MarketDataUnavailableException("Market data provider is currently unavailable.", exception);
@@ -131,5 +110,3 @@ public sealed class BinanceMarketDataClient(
     private static decimal ParseDecimal(JsonElement element) =>
         decimal.Parse(element.GetString()!, CultureInfo.InvariantCulture);
 }
-
-public sealed class MarketDataUnavailableException(string message, Exception? inner = null) : Exception(message, inner);

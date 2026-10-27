@@ -97,10 +97,9 @@
 
     function selectSetup(setupId) {
         selectedSetupId = selectedSetupId === setupId ? null : setupId;
-        $('.setup-card').removeClass('ring-1 ring-tv-accent');
-        if (selectedSetupId) {
-            $('.setup-card[data-setup-id="' + selectedSetupId + '"]').addClass('ring-1 ring-tv-accent');
-        }
+        $('.setup-card').removeClass('ring-1 ring-tv-accent').filter(function () {
+            return selectedSetupId !== null && this.getAttribute('data-setup-id') === selectedSetupId;
+        }).addClass('ring-1 ring-tv-accent');
         App.drawingRenderer.highlight(selectedSetupId);
     }
 
@@ -115,9 +114,17 @@
 
     let initialResultHtml = '';
     let running = false;
+    let generation = 0;
+
+    function restorePanel() {
+        if (App.state.analysis) render(App.state.analysis);
+        else $('#analysis-result').html(initialResultHtml);
+    }
 
     App.analysisPanel = {
         reset: function () {
+            generation++;
+            running = false;
             App.state.analysis = null;
             selectedSetupId = null;
             $('#analysis-result').html(initialResultHtml);
@@ -129,7 +136,7 @@
             initialResultHtml = $('#analysis-result').html();
             $('#analysis-result')
                 .on('click', '.setup-card', function () {
-                    selectSetup($(this).data('setup-id'));
+                    selectSetup(this.getAttribute('data-setup-id'));
                 })
                 .on('click', '#analysis-retry, #analysis-start', App.analysisPanel.run);
 
@@ -150,11 +157,18 @@
             if (running) return;
 
             running = true;
-            App.panel.open('analysis');
+            const requestGeneration = generation;
+            const requested = { symbol: App.state.symbol, timeframe: App.state.timeframe };
+            const isStale = function () {
+                return requestGeneration !== generation || requested.symbol !== App.state.symbol || requested.timeframe !== App.state.timeframe;
+            };
+
+            App.panel.open();
             $('#analysis-result').html(skeleton());
 
-            return App.api.post('/api/analysis', { symbol: App.state.symbol, timeframe: App.state.timeframe })
+            return App.api.post('/api/analysis', requested)
                 .done(function (result) {
+                    if (isStale()) return restorePanel();
                     App.state.analysis = result;
                     selectedSetupId = null;
                     render(result);
@@ -164,11 +178,12 @@
                     App.toast.show('Analysis ready: ' + result.setups.length + ' setup(s).', 'success');
                 })
                 .fail(function (error) {
+                    if (isStale()) return restorePanel();
                     showError(error.message);
                     App.toast.show(error.message, 'error');
                 })
                 .always(function () {
-                    running = false;
+                    if (requestGeneration === generation) running = false;
                 });
         }
     };

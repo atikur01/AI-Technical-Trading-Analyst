@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace TradingChartAnalyzer.Features.Analysis.Models;
 
 public sealed class AnalysisResult
@@ -17,7 +15,7 @@ public sealed class MarketAnalysis
     public List<KeyLevel> KeyLevels { get; set; } = [];
     public string Summary { get; set; } = string.Empty;
     public string Bias { get; set; } = "neutral";
-    public int Confidence { get; set; }
+    public double Confidence { get; set; }
 }
 
 public sealed class TrendInfo
@@ -30,7 +28,7 @@ public sealed class KeyLevel
 {
     public decimal Price { get; set; }
     public string Type { get; set; } = string.Empty;
-    public int Strength { get; set; }
+    public double Strength { get; set; }
 }
 
 public sealed class TradeSetup
@@ -44,12 +42,4 @@ public sealed class TradeSetup
     public decimal RiskReward { get; set; }
     public List<string> Confluences { get; set; } = [];
     public string Invalidation { get; set; } = string.Empty;
-    public SetupRules? Rules { get; set; }
-}
-
-public sealed class SetupRules
-{
-    public string EntryCondition { get; set; } = string.Empty;
-    public string Indicator { get; set; } = string.Empty;
-    public Dictionary<string, JsonElement> Params { get; set; } = [];
 }

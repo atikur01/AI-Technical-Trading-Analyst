@@ -8,6 +8,4 @@ public sealed class BinanceOptions
     public string WsBaseUrl { get; set; } = "wss://stream.binance.com:9443/ws";
     public string DefaultSymbol { get; set; } = "BTCUSDT";
     public int CacheSeconds { get; set; } = 10;
-    public int TimeoutSeconds { get; set; } = 15;
-    public int MaxRangeCandles { get; set; } = 50_000;
 }

@@ -57,7 +57,7 @@
         connect: function (symbol, interval) {
             App.realtimeFeed.disconnect();
             attempt = 0;
-            if (/USDT$/.test(symbol)) open(token, symbol, interval);
+            if (App.isCryptoSymbol(symbol)) open(token, symbol, interval);
             else poll(token, symbol, interval);
         },
         disconnect: function () {

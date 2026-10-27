@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -18,6 +19,8 @@ public sealed class AnalysisService(
     private const int CandlesPerTimeframe = 500;
     private const int MinimumCandles = 60;
 
+    private static readonly ConcurrentDictionary<string, Lazy<Task<AnalysisResult>>> InFlight = new();
+
     public async Task<AnalysisResult> AnalyzeAsync(string symbol, Timeframe timeframe, CancellationToken cancellationToken)
     {
         var snapshot = await BuildSnapshotAsync(symbol, timeframe, cancellationToken);
@@ -29,15 +32,28 @@ public sealed class AnalysisService(
             return cached;
         }
 
-        var userPrompt = AnalysisPromptBuilder.BuildUserPrompt(snapshot);
-        var raw = await RequestAnalysisAsync(userPrompt, cancellationToken);
-        var result = AnalysisResultValidator.Validate(raw, snapshot);
+        var analysis = InFlight.GetOrAdd(cacheKey, key => new Lazy<Task<AnalysisResult>>(() => ComputeAsync(key, symbol, timeframe, snapshot)));
+        return await analysis.Value.WaitAsync(cancellationToken);
+    }
 
-        logger.LogInformation("Analysis for {Symbol} {Timeframe}: {Setups} setups, {Drawings} drawings, {Warnings} warnings",
-            symbol, timeframe, result.Setups.Count, result.Drawings.Count, result.Warnings.Count);
+    private async Task<AnalysisResult> ComputeAsync(string cacheKey, string symbol, Timeframe timeframe, MarketSnapshot snapshot)
+    {
+        try
+        {
+            var userPrompt = AnalysisPromptBuilder.BuildUserPrompt(snapshot);
+            var raw = await RequestAnalysisAsync(userPrompt, CancellationToken.None);
+            var result = AnalysisResultValidator.Validate(raw, snapshot);
 
-        cache.Set(cacheKey, result, TimeSpan.FromMinutes(options.Value.CacheMinutes));
-        return result;
+            logger.LogInformation("Analysis for {Symbol} {Timeframe}: {Setups} setups, {Drawings} drawings, {Warnings} warnings",
+                symbol, timeframe, result.Setups.Count, result.Drawings.Count, result.Warnings.Count);
+
+            cache.Set(cacheKey, result, TimeSpan.FromMinutes(options.Value.CacheMinutes));
+            return result;
+        }
+        finally
+        {
+            InFlight.TryRemove(cacheKey, out _);
+        }
     }
 
     private async Task<MarketSnapshot> BuildSnapshotAsync(string symbol, Timeframe timeframe, CancellationToken cancellationToken)
@@ -47,13 +63,9 @@ public sealed class AnalysisService(
             : new[] { timeframe, Timeframe.H1, Timeframe.H4, Timeframe.D1 }).Distinct().ToList();
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        var fetched = await Task.WhenAll(timeframes.Select(async tf =>
-        {
-            var candles = await marketData.GetKlinesAsync(symbol, tf, CandlesPerTimeframe, cancellationToken);
-            return (tf, Candles: (IReadOnlyList<Candle>)candles.Where(c => c.CloseTime < now).ToList());
-        }));
+        var fetched = await Task.WhenAll(timeframes.Select(tf => FetchClosedCandlesAsync(symbol, tf, tf == timeframe, now, cancellationToken)));
 
-        var usable = fetched.Where(f => f.Candles.Count >= MinimumCandles).ToDictionary(f => f.tf, f => f.Candles);
+        var usable = fetched.Where(f => f.Candles.Count >= MinimumCandles).ToDictionary(f => f.Timeframe, f => f.Candles);
 
         if (!usable.ContainsKey(timeframe))
         {
@@ -61,6 +73,21 @@ public sealed class AnalysisService(
         }
 
         return MarketSnapshotBuilder.Build(symbol, timeframe, usable);
+    }
+
+    private async Task<(Timeframe Timeframe, IReadOnlyList<Candle> Candles)> FetchClosedCandlesAsync(
+        string symbol, Timeframe timeframe, bool required, long now, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var candles = await marketData.GetKlinesAsync(symbol, timeframe, CandlesPerTimeframe, cancellationToken);
+            return (timeframe, candles.Where(c => c.CloseTime < now).ToList());
+        }
+        catch (MarketDataUnavailableException exception) when (!required)
+        {
+            logger.LogWarning(exception, "Skipping {Timeframe} candles for {Symbol}", timeframe, symbol);
+            return (timeframe, []);
+        }
     }
 
     private async Task<AnalysisResult> RequestAnalysisAsync(string userPrompt, CancellationToken cancellationToken)
@@ -104,7 +131,7 @@ public sealed class AnalysisService(
             result = parsed;
             return true;
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
         {
             return false;
         }

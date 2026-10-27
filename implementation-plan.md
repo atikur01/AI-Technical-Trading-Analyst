@@ -59,12 +59,6 @@ TradingChartAnalyzer/
 │   │   ├── AnalysisService.cs
 │   │   ├── AnalysisController.cs
 │   │   └── Models/ (AnalysisRequest, AnalysisResult, TradeSetup, Drawing)
-│   └── Backtest/
-│       ├── BacktestController.cs
-│       ├── BacktestEngine.cs
-│       ├── Strategies/ (IStrategy, EmaCrossStrategy, RsiReversalStrategy, FibPullbackStrategy, AiSetupRuleStrategy)
-│       ├── BacktestMetricsCalculator.cs
-│       └── Models/ (BacktestRequest, BacktestResult, BacktestTrade, EquityPoint)
 ├── Shared/
 │   ├── Http/ (Polly retry, error handling)
 │   └── Views/_Layout.cshtml
@@ -73,8 +67,7 @@ TradingChartAnalyzer/
 │   └── js/
 │       ├── chart/ (chart-core.js, realtime-feed.js)
 │       ├── drawings/ (drawing-renderer.js, primitives/: trendline, fib, rect-zone, position-box, label)
-│       ├── analysis/ (analysis-panel.js)
-│       └── backtest/ (backtest-panel.js)
+│       └── analysis/ (analysis-panel.js)
 └── Program.cs
 ```
 
@@ -91,8 +84,6 @@ TradingChartAnalyzer/
   │        ├─ PromptBuilder ──► muse-spark-1.3-contributor ──► JSON
   │        └─ Validator ──► AnalysisResult { analysis, setups[], drawings[] }
   │                          └─► Frontend drawing-renderer চার্টে আঁকে
-  └─ POST /api/backtest ──► [Backtest] ──► Historical candles (paginated) ──► Engine ──► Metrics + Trades
-                                             └─► Frontend: trade markers + equity curve
 ```
 
 ### ২.৪ AI রেসপন্স JSON স্কিমা (Contract)
@@ -116,8 +107,7 @@ TradingChartAnalyzer/
       "takeProfits": [0, 0],
       "riskReward": 0,
       "confluences": ["string"],
-      "invalidation": "string",
-      "rules": { "entryCondition": "string", "indicator": "ema|rsi|fib|structure", "params": {} }
+      "invalidation": "string"
     }
   ],
   "drawings": [
@@ -149,7 +139,6 @@ TradingChartAnalyzer/
 2. "Analyze with AI" বাটন: সার্ভার মাল্টি-টাইমফ্রেম ক্যান্ডেল (যেমন 1d, 4h, 1h + বর্তমান টাইমফ্রেম) নেবে, C#-এ indicators, swing points, market structure (HH/HL/LH/LL, BOS, CHoCH), support/resistance, fibonacci লেভেল হিসাব করবে, একটি কম্প্যাক্ট MarketSnapshot বানিয়ে AI-কে পাঠাবে। AI একটি কঠোর JSON স্কিমায় analysis, setups ও drawings ফেরত দেবে।
 3. AI-এর drawings চার্টে স্বয়ংক্রিয়ভাবে আঁকা হবে: trendline, horizontal level, fibonacci retracement/extension, supply/demand/FVG/order block zone, long/short position box (entry, SL, TP সহ), markers (BOS/CHoCH)। প্রতিটি ড্রয়িং টাইপ আলাদা primitive ক্লাস; সাইড প্যানেল থেকে show/hide ও clear করা যাবে।
 4. সাইড প্যানেলে ট্রেডারের মতো রিপোর্ট: HTF/LTF trend, bias, confidence, key levels, প্রতিটি setup-এর entry/SL/TP/RR, confluences, invalidation। কোনো setup-এ ক্লিক করলে সেই setup-এর ড্রয়িং হাইলাইট হবে।
-5. Backtest অপশন: স্ট্র্যাটেজি (EMA Cross, RSI Reversal, Fib Pullback, এবং "AI Setup Rules"), টাইমফ্রেম, তারিখ রেঞ্জ, প্রাথমিক ব্যালেন্স, রিস্ক % প্রতি ট্রেড, ফি % ও স্লিপেজ ইনপুট। ফলাফল: total trades, win rate, profit factor, net PnL, max drawdown, expectancy, average RR, Sharpe ratio, equity curve চার্ট, trade list টেবিল, এবং মূল চার্টে entry/exit markers।
 
 ## বাধ্যতামূলক কোডিং নিয়ম
 - Feature-first architecture: `Features/<FeatureName>/` এর ভেতরে Controller, Service, Models, Views। Razor view location কনফিগার করবে।
@@ -186,14 +175,14 @@ Phase 1 করো:
 3. Tailwind standalone CLI সেটআপ: wwwroot/css/input.css, tailwind.config.js (content: Features/**/*.cshtml, Shared/**/*.cshtml, wwwroot/js/**/*.js), TradingView-এর মতো ডার্ক কালার টোকেন (bg #131722, panel #1e222d, border #2a2e39, text #d1d4dc, up #26a69a, down #ef5350)। csproj-এ build-এর আগে Tailwind চালানোর MSBuild target যোগ করো।
 4. jQuery 3.7.1 ও lightweight-charts (পিন করা ভার্শন) _Layout-এ যোগ করো।
 5. appsettings.json-এ "Binance" (RestBaseUrl, WsBaseUrl, DefaultSymbol) ও "Ai" (BaseUrl, Model = "muse-spark-1.3-contributor", Temperature = 0.2, MaxTokens, TimeoutSeconds) সেকশন; ApiKey user-secrets থেকে।
-6. লেআউট: টপ বার (সিম্বল, টাইমফ্রেম বাটন, indicator ড্রপডাউন, "Analyze with AI", "Backtest"), মাঝে চার্ট, ডানে কলাপসিবল প্যানেল (Analysis / Backtest ট্যাব)।
+6. লেআউট: টপ বার (সিম্বল, টাইমফ্রেম বাটন, indicator ড্রপডাউন, "Analyze with AI"), মাঝে চার্ট, ডানে কলাপসিবল প্যানেল।
 ```
 
 ### Phase 2 — মার্কেট ডেটা ও চার্ট
 
 ```text
 Phase 2 করো:
-1. Features/MarketData: Candle record (OpenTime, Open, High, Low, Close, Volume, CloseTime), Timeframe enum ↔ Binance interval ম্যাপিং, typed HttpClient BinanceMarketDataClient (GetKlinesAsync with limit ≤ 1000, এবং GetKlinesRangeAsync যা startTime/endTime দিয়ে pagination করে বড় রেঞ্জ আনে), resilience handler, IMemoryCache।
+1. Features/MarketData: Candle record (OpenTime, Open, High, Low, Close, Volume, CloseTime), Timeframe enum ↔ Binance interval ম্যাপিং, typed HttpClient BinanceMarketDataClient (GetKlinesAsync with limit ≤ 1000), resilience handler, IMemoryCache।
 2. GET /api/market/klines?symbol=BTCUSDT&interval=1h&limit=500 endpoint।
 3. wwwroot/js/chart/chart-core.js: চার্ট তৈরি, candlestick + volume (আলাদা price scale), টাইমফ্রেম পরিবর্তনে রিলোড, OHLC লেজেন্ড crosshair-এ আপডেট, resize হ্যান্ডলিং।
 4. wwwroot/js/chart/realtime-feed.js: Binance WebSocket kline stream, series.update(), টাইমফ্রেম পরিবর্তনে পুরনো সকেট বন্ধ, auto-reconnect with backoff।
@@ -232,24 +221,13 @@ Phase 5 করো:
 3. analysis-panel.js: "Analyze with AI" ক্লিক → loading skeleton → রেজাল্ট রেন্ডার (trend ব্যাজ, bias, confidence বার, key levels, setup কার্ড — direction রঙে, entry/SL/TP/RR, confluences চিপ, invalidation), কার্ডে ক্লিক করলে highlight ও চার্ট সেই এলাকায় স্ক্রল, warnings দেখানো, disclaimer।
 ```
 
-### Phase 6 — Backtest
-
-```text
-Phase 6 করো:
-1. Features/Backtest: IStrategy (Evaluate(IReadOnlyList<Candle> closedCandles, IndicatorContext) → Signal?), EmaCrossStrategy, RsiReversalStrategy, FibPullbackStrategy, এবং AiSetupRuleStrategy (একটি AI setup-এর rules.indicator/params ও SL/TP দূরত্ব ATR-গুণিতক বা শতাংশে রূপান্তর করে ঐতিহাসিক ডেটায় প্রয়োগ)।
-2. BacktestEngine: bar-by-bar লুপ, শুধু ক্লোজড ক্যান্ডেলে সিগন্যাল, পরের open-এ এন্ট্রি, রিস্ক % দিয়ে পজিশন সাইজ, ফি ও স্লিপেজ, একসাথে একটি পজিশন, একই ক্যান্ডেলে SL+TP হলে SL।
-3. BacktestMetricsCalculator: total trades, win rate, profit factor, net PnL (% ও USDT), max drawdown, expectancy, avg RR, Sharpe, equity curve।
-4. POST /api/backtest { strategy, params, timeframe, from, to, initialBalance, riskPercent, feePercent, slippagePercent, setupId? }। তারিখ রেঞ্জ ও ক্যান্ডেল সংখ্যার যুক্তিসঙ্গত সীমা ভ্যালিডেশন।
-5. backtest-panel.js: ফর্ম (স্ট্র্যাটেজি অনুযায়ী ডায়নামিক প্যারামিটার ফিল্ড), রান বাটন, মেট্রিক কার্ড গ্রিড, ছোট Lightweight Chart-এ equity curve, সর্টেবল trade টেবিল; টেবিলের রো-তে ক্লিক করলে মূল চার্টে সেই ট্রেডে জুম; মূল চার্টে entry/exit markers। Analysis প্যানেলের প্রতিটি setup কার্ডে "Backtest this setup" বাটন যা AiSetupRuleStrategy দিয়ে ব্যাকটেস্ট চালায়।
-```
-
 ### Phase 7 — পলিশ ও প্রোডাকশন রেডিনেস
 
 ```text
 Phase 7 করো:
 1. গ্লোবাল এরর হ্যান্ডলিং (UseExceptionHandler + ProblemDetails), structured logging (AI latency, token usage, Binance এরর)।
 2. Health check endpoint (/health) — Binance reachability।
-3. ফ্রন্টএন্ডে keyboard shortcut (টাইমফ্রেম 1–6, A = Analyze, B = Backtest, Esc = প্যানেল বন্ধ), টোস্ট নোটিফিকেশন, মোবাইলে প্যানেল bottom sheet।
+3. ফ্রন্টএন্ডে keyboard shortcut (টাইমফ্রেম 1–6, A = Analyze, Esc = প্যানেল বন্ধ), টোস্ট নোটিফিকেশন, মোবাইলে প্যানেল bottom sheet।
 4. সব কনফিগ মান appsettings-এ, কোনো হার্ডকোডেড URL/কী নয়।
 5. পুরো কোডবেস রিভিউ করে duplicate কোড সরাও এবং README-তে রান করার ধাপ (user-secrets সেট, Tailwind build, dotnet run) লেখো।
 ```
