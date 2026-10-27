@@ -2,7 +2,7 @@
 
 Built for the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/meta-ai-developer-hackathon), theme **Build for Your World**.
 
-**Live demo:** _add your deployed URL here_ · **Demo video:** _add link here_
+**Live demo:** [ai-trading-analysis.runasp.net](http://ai-trading-analysis.runasp.net/) · **Demo video:** _add link here_
 
 ## The problem
 
