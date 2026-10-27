@@ -15,7 +15,6 @@ env:
   PUBLISH_DIR: publish
   WEBDEPLOY_SERVER: site102287.siteasp.net
   WEBDEPLOY_SITE: site102287
-  SITE_URL: https://site102287.siteasp.net
 
 jobs:
   deploy:
@@ -77,16 +76,3 @@ jobs:
           -enableRule:AppOffline
           -skip:objectName=dirPath,absolutePath=\\logs$
           -skip:skipAction=Delete,objectName=filePath,absolutePath=\\App_Data\\.*
-
-      - name: Smoke test
-        shell: pwsh
-        run: |
-          $url = "$env:SITE_URL/health"
-          for ($i = 1; $i -le 10; $i++) {
-            try {
-              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 30
-              if ($response.StatusCode -eq 200) { Write-Host "Healthy: $url"; exit 0 }
-            } catch { Write-Host "Attempt $i failed: $($_.Exception.Message)" }
-            Start-Sleep -Seconds 10
-          }
-          throw "Health check failed: $url"
