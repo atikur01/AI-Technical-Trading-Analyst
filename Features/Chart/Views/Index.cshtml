@@ -18,13 +18,6 @@
 
 <div id="app" class="flex h-full w-full min-w-0 flex-col overflow-hidden" data-symbol="@Model.Symbol" data-ws-base-url="@Model.WsBaseUrl" data-poll-seconds="@Model.PollSeconds">
     <header class="relative z-20 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-tv-border bg-tv-panel/90 px-3 py-2 backdrop-blur-xl">
-        <div class="mr-1 flex items-center gap-2" aria-label="AI Trading Chart Analyzer">
-            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-tv-accent to-tv-violet shadow-glow">
-                <svg viewBox="0 0 24 24" class="h-[18px] w-[18px] text-white" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9" /><path d="M15 6h5v5" /></svg>
-            </span>
-            <span class="hidden text-sm font-bold leading-none tracking-tight lg:block">Chart<span class="bg-gradient-to-r from-tv-accent to-tv-violet bg-clip-text text-transparent">AI</span></span>
-        </div>
-
         <div class="relative flex items-center gap-3">
             <button type="button" id="symbol-toggle" class="btn !bg-tv-bg text-sm font-bold tracking-tight" aria-haspopup="true" title="Change symbol (/)">
                 <svg viewBox="0 0 24 24" class="h-4 w-4 text-tv-muted" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4-4" /></svg>
