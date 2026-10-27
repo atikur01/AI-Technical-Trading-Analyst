@@ -11,6 +11,7 @@
         ("bollinger", "Bollinger Bands", false),
         ("vwap", "VWAP", false),
         ("rsi", "RSI (14)", false),
+        ("rsidiv", "RSI Divergence", false),
         ("macd", "MACD (12,26,9)", false)
     };
 }
@@ -123,7 +124,10 @@
             <div id="pane-rsi" class="hidden h-32 border-t border-tv-border">
                 <div id="chart-rsi" class="h-full"></div>
             </div>
-            <div id="pane-macd" class="hidden h-32 border-t border-tv-border">
+            <div id="pane-rsidiv" class="hidden h-32 border-t border-tv-border">
+                <div id="chart-rsidiv" class="h-full"></div>
+            </div>
+            <div id="pane-macd"class="hidden h-32 border-t border-tv-border">
                 <div id="chart-macd" class="h-full"></div>
             </div>
             <footer class="border-t border-tv-border bg-tv-panel px-3 py-1 text-center text-xs text-tv-muted">

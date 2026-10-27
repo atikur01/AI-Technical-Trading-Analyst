@@ -67,7 +67,50 @@
         return result;
     }
 
+    function isPivot(values, index, left, right, isLow) {
+        const value = values[index];
+        if (value == null) return false;
+        for (let j = index - left; j <= index + right; j++) {
+            if (j === index) continue;
+            if (values[j] == null) return false;
+            if (isLow ? values[j] < value : values[j] > value) return false;
+        }
+        return true;
+    }
+
+    function findDivergences(candles, osc, options, isLow) {
+        const priceKey = isLow ? 'low' : 'high';
+        const found = [];
+        let previous = null;
+        for (let p = options.left; p < candles.length - options.right; p++) {
+            if (!isPivot(osc, p, options.left, options.right, isLow)) continue;
+            if (previous) {
+                const distance = p - previous;
+                const oscDelta = osc[p] - osc[previous];
+                const priceDelta = candles[p][priceKey] - candles[previous][priceKey];
+                const diverging = isLow ? oscDelta > 0 && priceDelta < 0 : oscDelta < 0 && priceDelta > 0;
+                if (diverging && distance >= options.minRange && distance <= options.maxRange) {
+                    found.push({
+                        type: isLow ? 'bullish' : 'bearish',
+                        from: { time: candles[previous].time, value: osc[previous] },
+                        to: { time: candles[p].time, value: osc[p] }
+                    });
+                }
+            }
+            previous = p;
+        }
+        return found;
+    }
+
     App.indicators = {
+        rsiDivergence: function (candles, period, overrides) {
+            const options = Object.assign({ left: 5, right: 5, minRange: 5, maxRange: 60 }, overrides);
+            const osc = rsi(candles.map(function (c) { return c.close; }), period);
+            const divergences = findDivergences(candles, osc, options, true)
+                .concat(findDivergences(candles, osc, options, false))
+                .sort(function (a, b) { return a.to.time - b.to.time; });
+            return { rsi: toSeries(candles, osc), divergences: divergences };
+        },
         ema: function (candles, period) {
             return toSeries(candles, ema(candles.map(function (c) { return c.close; }), period));
         },

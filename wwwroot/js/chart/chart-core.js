@@ -23,9 +23,11 @@
     let overlaySeries = {};
     let rsiPane = null;
     let macdPane = null;
+    let rsiDivPane = null;
     let smcPrimitive = null;
     const MIN_PRICE_ZOOM = 0.05;
     const MAX_PRICE_ZOOM = 20;
+    const MAX_DIVERGENCES = 20;
 
     let loadToken = 0;
     let priceShift = 0;
@@ -102,7 +104,7 @@
     }
 
     function allCharts() {
-        return [chart, rsiPane && rsiPane.chart, macdPane && macdPane.chart].filter(Boolean);
+        return [chart, rsiPane && rsiPane.chart, rsiDivPane && rsiDivPane.chart, macdPane && macdPane.chart].filter(Boolean);
     }
 
     function wireSync(paneChart) {
@@ -113,15 +115,60 @@
         if (range) paneChart.timeScale().setVisibleLogicalRange(range);
     }
 
+    function addRsiLevels(series) {
+        [70, 30].forEach(function (price) {
+            series.createPriceLine({ price: price, color: '#787b86', lineStyle: 2, lineWidth: 1, axisLabelVisible: false });
+        });
+    }
+
     function ensureRsi() {
         if (rsiPane) return rsiPane;
         const paneChart = createPane('chart-rsi');
         const series = paneChart.addLineSeries({ color: '#ab47bc', lineWidth: 1, priceLineVisible: false, title: 'RSI' });
-        series.createPriceLine({ price: 70, color: '#787b86', lineStyle: 2, lineWidth: 1, axisLabelVisible: false });
-        series.createPriceLine({ price: 30, color: '#787b86', lineStyle: 2, lineWidth: 1, axisLabelVisible: false });
+        addRsiLevels(series);
         rsiPane = { chart: paneChart, series: series };
         wireSync(paneChart);
         return rsiPane;
+    }
+
+    function ensureRsiDivergence() {
+        if (rsiDivPane) return rsiDivPane;
+        const paneChart = createPane('chart-rsidiv');
+        const series = paneChart.addLineSeries({ color: '#2962ff', lineWidth: 2, priceLineVisible: false, title: 'RSI Div' });
+        addRsiLevels(series);
+        rsiDivPane = { chart: paneChart, series: series, segments: [] };
+        wireSync(paneChart);
+        return rsiDivPane;
+    }
+
+    function renderRsiDivergence() {
+        const pane = ensureRsiDivergence();
+        const result = App.indicators.rsiDivergence(App.state.candles, 14);
+        pane.series.setData(result.rsi);
+        pane.segments.forEach(function (segment) { pane.chart.removeSeries(segment); });
+        const recent = result.divergences.slice(-MAX_DIVERGENCES);
+        pane.segments = recent.map(function (divergence) {
+            const bullish = divergence.type === 'bullish';
+            const segment = pane.chart.addLineSeries({
+                color: bullish ? theme.up : theme.down,
+                lineWidth: 2,
+                priceLineVisible: false,
+                lastValueVisible: false,
+                crosshairMarkerVisible: false
+            });
+            segment.setData([divergence.from, divergence.to]);
+            return segment;
+        });
+        pane.series.setMarkers(recent.map(function (divergence) {
+            const bullish = divergence.type === 'bullish';
+            return {
+                time: divergence.to.time,
+                position: bullish ? 'belowBar' : 'aboveBar',
+                shape: bullish ? 'arrowUp' : 'arrowDown',
+                color: bullish ? theme.up : theme.down,
+                text: bullish ? 'Bull' : 'Bear'
+            };
+        }));
     }
 
     function ensureMacd() {
@@ -201,6 +248,9 @@
         } else if (key === 'rsi') {
             $('#pane-rsi').toggleClass('hidden', !enabled);
             if (enabled) ensureRsi().series.setData(App.indicators.rsi(candles, 14));
+        } else if (key === 'rsidiv') {
+            $('#pane-rsidiv').toggleClass('hidden', !enabled);
+            if (enabled) renderRsiDivergence();
         } else if (key === 'macd') {
             $('#pane-macd').toggleClass('hidden', !enabled);
             if (enabled) {
@@ -214,7 +264,7 @@
     }
 
     function refreshIndicators() {
-        ['smc', 'ema20', 'ema50', 'ema200', 'vwap', 'bollinger', 'rsi', 'macd'].forEach(applyIndicator);
+        ['smc', 'ema20', 'ema50', 'ema200', 'vwap', 'bollinger', 'rsi', 'rsidiv', 'macd'].forEach(applyIndicator);
     }
 
     function showError(message) {
