@@ -374,7 +374,9 @@
                     refreshFutureTimes();
                     refreshIndicators();
                     refreshMarkers();
+                    App.chartCore.setAutoScale(true);
                     showLatest(candles.length);
+                    App.chartControls.syncButtons();
                     renderLegend(candles[candles.length - 1]);
                     updateLastPrice();
                     $('#chart-loading').addClass('hidden');
