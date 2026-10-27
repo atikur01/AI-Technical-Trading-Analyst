@@ -12,6 +12,10 @@ public static partial class AnalysisResultValidator
     private const decimal MinRiskReward = 2m;
     private const decimal RangeMargin = 0.2m;
     private const int MaxProjectedCandles = 24;
+    private const double MinStopAtr = 0.75;
+    private const double MaxStopAtr = 3;
+    private const double MaxEntryDistanceAtr = 6;
+    private const decimal ZoneTolerance = 0.25m;
 
     private static readonly string[] Trends = ["bullish", "bearish", "ranging"];
     private static readonly string[] Biases = ["long", "short", "neutral"];
@@ -40,9 +44,11 @@ public static partial class AnalysisResultValidator
         result.Analysis = NormalizeAnalysis(raw.Analysis, PriceOk, result.Warnings);
         var idMap = new Dictionary<string, string>();
         var rawSetups = (raw.Setups ?? []).Where(s => s is not null).ToList();
-        result.Setups = ValidateSetups(rawSetups, PriceOk, AnalysisTrendFilter.AllowedDirection(snapshot), idMap, result.Warnings);
+        var primary = PrimaryTimeframe(snapshot);
+        result.Setups = ValidateSetups(rawSetups, PriceOk, AnalysisTrendFilter.AllowedDirection(snapshot), s => CheckRiskDistances(s, snapshot, primary), idMap, result.Warnings);
 
         var setupsById = result.Setups.ToDictionary(s => s.Id);
+        var latestTime = primary?.Candles.Count > 0 ? (long)primary.Candles[^1][0] : snapshot.ValidRange.ToTime;
         var validated = new List<Drawing>();
 
         foreach (var drawing in (raw.Drawings ?? []).Where(d => d is not null))
@@ -50,7 +56,7 @@ public static partial class AnalysisResultValidator
             var rawSetupId = drawing.SetupId?.Trim();
             drawing.SetupId = rawSetupId is not null && idMap.TryGetValue(rawSetupId, out var mappedId) ? mappedId : null;
 
-            var normalized = NormalizeDrawing(drawing, setupsById, PriceOk, TimeOk, PointOk);
+            var normalized = NormalizeDrawing(drawing, setupsById, PriceOk, TimeOk, PointOk, snapshot);
             if (normalized is null)
             {
                 result.Warnings.Add($"Dropped invalid {DrawingName(drawing)} drawing.");
@@ -67,7 +73,7 @@ public static partial class AnalysisResultValidator
             result.Drawings.Add(new PositionDrawing
             {
                 SetupId = setup.Id,
-                Time = snapshot.ValidRange.ToTime,
+                Time = latestTime,
                 Entry = setup.Entry,
                 StopLoss = setup.StopLoss,
                 TakeProfit = setup.TakeProfits[0],
@@ -108,6 +114,7 @@ public static partial class AnalysisResultValidator
         List<TradeSetup> setups,
         Func<decimal, bool> priceOk,
         string? allowedDirection,
+        Func<TradeSetup, string?> riskCheck,
         Dictionary<string, string> idMap,
         List<string> warnings)
     {
@@ -116,7 +123,7 @@ public static partial class AnalysisResultValidator
         foreach (var setup in setups)
         {
             setup.Direction = setup.Direction?.Trim().ToLowerInvariant() ?? string.Empty;
-            var reason = Check(setup, priceOk) ?? CheckTrend(setup, allowedDirection);
+            var reason = Check(setup, priceOk) ?? CheckTrend(setup, allowedDirection) ?? riskCheck(setup);
             if (reason is not null)
             {
                 warnings.Add($"Dropped setup '{setup.Id}': {reason}.");
@@ -180,12 +187,58 @@ public static partial class AnalysisResultValidator
             ? $"against the {AnalysisTrendFilter.TrendTimeframe.ToInterval()} EMA200 trend"
             : null;
 
+    private static TimeframeSnapshot? PrimaryTimeframe(MarketSnapshot snapshot) =>
+        snapshot.Timeframes.FirstOrDefault(t => t.Timeframe == snapshot.PrimaryTimeframe);
+
+    private static string? CheckRiskDistances(TradeSetup setup, MarketSnapshot snapshot, TimeframeSnapshot? primary)
+    {
+        if (primary is null || primary.Atr <= 0 || (TimeframeExtensions.TryParse(snapshot.PrimaryTimeframe, out var timeframe) && timeframe.IsMacro()))
+        {
+            return null;
+        }
+
+        var stopAtr = (double)Math.Abs(setup.Entry - setup.StopLoss) / primary.Atr;
+        if (stopAtr < MinStopAtr || stopAtr > MaxStopAtr)
+        {
+            return $"stop distance of {stopAtr:0.0} ATR is outside {MinStopAtr}-{MaxStopAtr} ATR";
+        }
+
+        var entryAtr = (double)Math.Abs(setup.Entry - snapshot.CurrentPrice) / primary.Atr;
+        return entryAtr > MaxEntryDistanceAtr ? $"entry is {entryAtr:0.0} ATR away from the current price" : null;
+    }
+
+    private static bool MatchesSnapshotZone(ZoneDrawing zone, MarketSnapshot snapshot)
+    {
+        var smc = snapshot.Timeframes.Select(t => t.Smc).Where(s => s is not null).Select(s => s!).ToList();
+        var candidates = zone.Kind switch
+        {
+            "orderblock" => smc.SelectMany(s => s.SwingOrderBlocks.Concat(s.InternalOrderBlocks)),
+            "fvg" => smc.SelectMany(s => s.FairValueGaps),
+            _ => null
+        };
+
+        if (candidates is null)
+        {
+            return true;
+        }
+
+        var top = Math.Max(zone.From.Price, zone.To.Price);
+        var bottom = Math.Min(zone.From.Price, zone.To.Price);
+
+        return candidates.Any(c =>
+        {
+            var margin = (c.Top - c.Bottom) * ZoneTolerance;
+            return top >= c.Bottom - margin && bottom <= c.Top + margin;
+        });
+    }
+
     private static Drawing? NormalizeDrawing(
         Drawing drawing,
         IReadOnlyDictionary<string, TradeSetup> setups,
         Func<decimal, bool> priceOk,
         Func<long, bool> timeOk,
-        Func<ChartPoint?, bool> pointOk)
+        Func<ChartPoint?, bool> pointOk,
+        MarketSnapshot snapshot)
     {
         drawing.Label = Truncate(drawing.Label);
 
@@ -212,7 +265,7 @@ public static partial class AnalysisResultValidator
 
             case ZoneDrawing zone:
                 zone.Kind = Pick(zone.Kind, ZoneKinds, "demand");
-                return pointOk(zone.From) && pointOk(zone.To) && zone.From.Price != zone.To.Price ? zone : null;
+                return pointOk(zone.From) && pointOk(zone.To) && zone.From.Price != zone.To.Price && MatchesSnapshotZone(zone, snapshot) ? zone : null;
 
             case PositionDrawing position:
                 if (position.SetupId is null || !setups.TryGetValue(position.SetupId, out var setup) || !timeOk(position.Time))
