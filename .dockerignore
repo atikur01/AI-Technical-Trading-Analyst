@@ -1,0 +1,10 @@
+.env
+.git
+.vs
+bin
+obj
+node_modules
+logs
+Dockerfile
+.dockerignore
+*.user

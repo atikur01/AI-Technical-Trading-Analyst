@@ -6,6 +6,9 @@ public sealed class AnalysisResult
     public List<TradeSetup> Setups { get; set; } = [];
     public List<Drawing> Drawings { get; set; } = [];
     public List<string> Warnings { get; set; } = [];
+    public string? Model { get; set; }
+    public DateTimeOffset? GeneratedAt { get; set; }
+    public bool IsFallback { get; set; }
 }
 
 public sealed class MarketAnalysis

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using TradingChartAnalyzer.Features.Analysis.Models;
 using TradingChartAnalyzer.Features.Indicators;
 using TradingChartAnalyzer.Features.MarketData;
@@ -12,6 +13,8 @@ public sealed class AnalysisService(
     IMarketDataService marketData,
     IAiChatClient aiClient,
     IMemoryCache cache,
+    AnalysisFallbackStore fallbackStore,
+    IOptions<AiOptions> aiOptions,
     ILogger<AnalysisService> logger)
 {
     private const int CandlesPerTimeframe = 500;
@@ -31,7 +34,23 @@ public sealed class AnalysisService(
         }
 
         var analysis = InFlight.GetOrAdd(cacheKey, key => new Lazy<Task<AnalysisResult>>(() => ComputeAsync(key, symbol, timeframe, snapshot)));
-        return await analysis.Value.WaitAsync(cancellationToken);
+
+        try
+        {
+            return await analysis.Value.WaitAsync(cancellationToken);
+        }
+        catch (Exception exception) when (exception is AiUnavailableException or AiResponseException)
+        {
+            var fallback = await fallbackStore.TryLoadAsync(symbol, timeframe, cancellationToken);
+            if (fallback is null)
+            {
+                throw;
+            }
+
+            logger.LogWarning("Serving saved analysis for {Symbol} {Timeframe}: {Reason}", symbol, timeframe, exception.Message);
+            fallback.IsFallback = true;
+            return fallback;
+        }
     }
 
     private async Task<AnalysisResult> ComputeAsync(string cacheKey, string symbol, Timeframe timeframe, MarketSnapshot snapshot)
@@ -41,11 +60,14 @@ public sealed class AnalysisService(
             var userPrompt = AnalysisPromptBuilder.BuildUserPrompt(snapshot);
             var raw = await RequestAnalysisAsync(userPrompt, CancellationToken.None);
             var result = AnalysisResultValidator.Validate(raw, snapshot);
+            result.Model = aiOptions.Value.Model;
+            result.GeneratedAt = DateTimeOffset.UtcNow;
 
             logger.LogInformation("Analysis for {Symbol} {Timeframe}: {Setups} setups, {Drawings} drawings, {Warnings} warnings",
                 symbol, timeframe, result.Setups.Count, result.Drawings.Count, result.Warnings.Count);
 
             cache.Set(cacheKey, result, TimeSpan.FromMilliseconds(timeframe.ToMilliseconds()));
+            await fallbackStore.SaveAsync(symbol, timeframe, result, CancellationToken.None);
             return result;
         }
         finally

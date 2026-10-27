@@ -5,7 +5,7 @@
         'Reading market structure',
         'Mapping support and resistance',
         'Checking higher timeframe trend',
-        'Scoring trade setups',
+        'Scoring trade scenarios',
         'Drawing levels on the chart'
     ];
     const STEP_INTERVAL_MS = 2800;
@@ -138,7 +138,7 @@
         if (!setups.length) {
             return '<div class="card text-center text-sm text-tv-muted"><div class="mb-1 text-base font-semibold text-tv-text">No clean setup right now</div>Waiting for a better opportunity is a valid position.</div>';
         }
-        return '<div class="space-y-3"><div class="label !mb-0 px-1">Trade setups · ' + setups.length + '</div>' + setups.map(renderSetup).join('') + '</div>';
+        return '<div class="space-y-3"><div class="label !mb-0 px-1">Trade scenarios · ' + setups.length + '</div>' + setups.map(renderSetup).join('') + '</div>';
     }
 
     function renderWarnings(warnings) {
@@ -147,13 +147,32 @@
         return '<div class="card !border-yellow-500/30 !bg-yellow-500/5 text-xs text-yellow-400"><div class="mb-1 font-semibold">Validation notes</div><ul class="list-disc space-y-0.5 pl-4">' + rows + '</ul></div>';
     }
 
+    function formatTime(value) {
+        return value ? new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '';
+    }
+
+    function renderFallbackNotice(result) {
+        if (!result.isFallback) return '';
+        return '<div class="card !border-yellow-500/30 !bg-yellow-500/5 text-xs text-yellow-400"><div class="mb-1 font-semibold">Showing a saved analysis</div>' +
+            'The AI model is unavailable right now, so this is the last analysis generated for this chart' +
+            (result.generatedAt ? ' on ' + esc(formatTime(result.generatedAt)) : '') + '. Prices may have moved since.</div>';
+    }
+
+    function renderProvenance(result) {
+        const parts = ['AI-generated' + (result.model ? ' by ' + esc(result.model) : '')];
+        if (result.generatedAt) parts.push(esc(formatTime(result.generatedAt)));
+        parts.push('educational only, not financial advice');
+        return '<p class="text-center text-[11px] text-tv-muted">' + parts.join(' · ') + '</p>';
+    }
+
     function render(result) {
         $('#analysis-result').html(
             '<div class="space-y-3">' +
+            renderFallbackNotice(result) +
             renderTrend(result.analysis) + renderSummary(result.analysis) + renderSetups(result.setups) + renderLevels(result.analysis.keyLevels) +
             renderWarnings(result.warnings) +
             '<button type="button" id="analysis-rerun" class="btn w-full">Re-run analysis</button>' +
-            '<p class="text-center text-[11px] text-tv-muted">AI-generated · not financial advice</p>' +
+            renderProvenance(result) +
             '</div>'
         );
     }
@@ -271,7 +290,9 @@
                     App.drawingRenderer.render(result.drawings);
                     syncControls();
                     $(document).trigger('analysis:updated');
-                    App.toast.show('Analysis ready: ' + result.setups.length + ' setup(s).', 'success');
+                    App.toast.show(result.isFallback
+                        ? 'AI is unavailable. Showing the last saved analysis.'
+                        : 'Analysis ready: ' + result.setups.length + ' scenario(s).', result.isFallback ? 'warning' : 'success');
                 })
                 .fail(function (error) {
                     if (isStale()) return restorePanel();

@@ -17,6 +17,7 @@
     <Compile Remove="node_modules\**" />
     <Content Remove="node_modules\**;package.json;package-lock.json" />
     <None Remove="node_modules\**" />
+    <Content Update="App_Data\**" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="BuildTailwind" BeforeTargets="BeforeBuild" Condition="Exists('$(TailwindCli)')">
