@@ -487,3 +487,5 @@ appsettings.Local.json
 
 .env
 !.env.example
+
+App_Data/analysis-fallback/
