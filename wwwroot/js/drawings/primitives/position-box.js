@@ -31,9 +31,10 @@
             ctx.stroke();
             ctx.restore();
 
-            this.drawLabel(ctx, 'TP ' + App.format.price(d.takeProfit), x1 + 4, targetY + (targetY < entryY ? 11 : -11), UP, 'left');
-            this.drawLabel(ctx, 'SL ' + App.format.price(d.stopLoss), x1 + 4, stopY + (stopY < entryY ? 11 : -11), DOWN, 'left');
-            this.drawLabel(ctx, 'Entry ' + App.format.price(d.entry) + '  RR ' + rr, x1 + 4, entryY, '#4f7cff', 'left');
+            const labelX = x2 - 4;
+            this.drawLabel(ctx, 'TP ' + App.format.price(d.takeProfit), labelX, targetY + (targetY < entryY ? 11 : -11), UP, 'right');
+            this.drawLabel(ctx, 'SL ' + App.format.price(d.stopLoss), labelX, stopY + (stopY < entryY ? 11 : -11), DOWN, 'right');
+            this.drawLabel(ctx, 'Entry ' + App.format.price(d.entry) + '  RR ' + rr, labelX, entryY, '#4f7cff', 'right');
         }
     }
 

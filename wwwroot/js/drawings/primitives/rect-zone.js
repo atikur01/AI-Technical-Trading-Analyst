@@ -34,7 +34,7 @@
             ctx.restore();
 
             const text = d.label || kind.name;
-            if (text) this.drawText(ctx, text, box.left + 6, box.top + 11, kind.color);
+            if (text) this.drawText(ctx, text, Math.min(box.right, size.width) - 6, box.top + 11, kind.color, 'right');
         }
 
         anchors() {

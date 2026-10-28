@@ -78,9 +78,10 @@
             ctx.restore();
         }
 
-        drawText(ctx, text, x, y, color) {
+        drawText(ctx, text, x, y, color, align) {
             ctx.save();
             ctx.font = FONT;
+            ctx.textAlign = align || 'left';
             ctx.fillStyle = this.rgba(color, 1);
             ctx.textBaseline = 'middle';
             ctx.fillText(text, x, y);
