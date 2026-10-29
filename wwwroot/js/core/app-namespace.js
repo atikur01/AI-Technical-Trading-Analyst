@@ -18,7 +18,7 @@ window.App = window.App || {};
         symbol: root.dataset.symbol,
         wsBaseUrl: root.dataset.wsBaseUrl,
         pollSeconds: Number(root.dataset.pollSeconds),
-        timeframe: '1w',
+        timeframe: '1M',
         candles: [],
         indicators: new Set(),
         analysis: null
