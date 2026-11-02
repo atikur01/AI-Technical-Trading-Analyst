@@ -15,9 +15,10 @@ Built for the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/m
 
 ## Screenshots
 
-![Screenshot 1](screenshorts/Screenshot%20(699).png)
-
-![Screenshot 2](screenshorts/Screenshot%20(700).png)
+<p align="center">
+  <img src="screenshorts/Screenshot%20(699).png" alt="Screenshot 1" width="49%">
+  <img src="screenshorts/Screenshot%20(700).png" alt="Screenshot 2" width="49%">
+</p>
 
 ## Table of Contents
 
