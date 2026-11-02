@@ -12,8 +12,12 @@ Built for the [Meta Global AI Developer Hackathon](https://cerebralvalley.ai/e/m
 | | |
 |---|---|
 | **Live demo** | [ai-trading-analysis.runasp.net](http://ai-trading-analysis.runasp.net/) |
-| **Demo video** | _add link here_ |
-| **Screenshots** | _add images here_ |
+
+## Screenshots
+
+![Screenshot 1](screenshorts/Screenshot%20(699).png)
+
+![Screenshot 2](screenshorts/Screenshot%20(700).png)
 
 ## Table of Contents
 
